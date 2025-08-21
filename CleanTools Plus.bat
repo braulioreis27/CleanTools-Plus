@@ -1,8 +1,8 @@
 @echo off
 :: Script de Manutenção Completo para Windows
 :: Combina limpeza, otimização, reparo e atualização em um único menu
-:: Versão 2.2 - Agosto 2023
-:: Adicionado: Gerenciamento de Armazenamento Reservado e melhorias em redes/impressão
+:: Versão 2.3 - Versão Otimizada
+:: Melhorias: Menu de limpeza simplificado, limpeza completa aprimorada, otimizações adicionadas
 
 :menu
 mode con: cols=80 lines=30
@@ -45,15 +45,13 @@ echo ==================================================
 echo.
 echo 1 - Limpeza Basica (Rapida)
 echo 2 - Limpeza Completa
-echo 3 - Limpeza Avancada (Baboo)
-echo 4 - Voltar ao Menu Principal
+echo 3 - Voltar ao Menu Principal
 echo.
 set /p escolha=Escolha o tipo de limpeza: 
 
 if "%escolha%"=="1" goto limpeza_basica
 if "%escolha%"=="2" goto limpeza_completa
-if "%escolha%"=="3" goto limpeza_avancada
-if "%escolha%"=="4" goto menu
+if "%escolha%"=="3" goto menu
 echo Opcao invalida!
 pause
 goto limpeza
@@ -62,19 +60,19 @@ goto limpeza
 echo.
 echo  Executando limpeza basica...
 :: Limpeza de arquivos temporários
-del /s /q %temp%\*.*
-rd /s /q %temp%
-md %temp%
-del /s /q /f C:\Windows\Temp\*.*
-del /s /q /f C:\Users\%USERNAME%\AppData\Local\Temp\*.*
+del /s /q %temp%\*.* 2>nul
+rd /s /q %temp% 2>nul
+md %temp% 2>nul
+del /s /q /f C:\Windows\Temp\*.* 2>nul
+del /s /q /f C:\Users\%USERNAME%\AppData\Local\Temp\*.* 2>nul
 
 :: Limpeza da Lixeira
-powershell -command "Clear-RecycleBin -Force"
+powershell -command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"
 
 :: Limpeza de cache de navegadores
-del /s /q /f "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Mozilla\Firefox\Profiles\*.default-release\cache2\entries\*.*"
+del /s /q /f "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*" 2>nul
+del /s /q /f "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*" 2>nul
+del /s /q /f "%LOCALAPPDATA%\Mozilla\Firefox\Profiles\*.default-release\cache2\entries\*.*" 2>nul
 
 echo.
 echo  Limpeza basica concluida!
@@ -84,65 +82,68 @@ goto limpeza
 :limpeza_completa
 echo.
 echo  Executando limpeza completa do sistema...
+echo  Esta operacao pode demorar alguns minutos...
 
-:: Limpeza de arquivos temporários
-del /s /q %temp%\*.*
-rd /s /q %temp%
-md %temp%
-del /s /q /f C:\Windows\Temp\*.*
-del /s /q /f C:\Users\%USERNAME%\AppData\Local\Temp\*.*
-del /s /q /f C:\Users\Public\Temp\*.*
+:: Limpeza de arquivos temporários do sistema
+del /s /q %temp%\*.* 2>nul
+rd /s /q %temp% 2>nul
+md %temp% 2>nul
+del /s /q /f C:\Windows\Temp\*.* 2>nul
+del /s /q /f C:\Users\%USERNAME%\AppData\Local\Temp\*.* 2>nul
+del /s /q /f C:\Users\Public\Temp\*.* 2>nul
 
 :: Limpeza de cache do Windows Update
-net stop wuauserv
-rd /s /q C:\Windows\SoftwareDistribution\Download
-net start wuauserv
+net stop wuauserv 2>nul
+rd /s /q C:\Windows\SoftwareDistribution\Download 2>nul
+net start wuauserv 2>nul
 
 :: Limpeza de arquivos de cache do sistema
-del /s /q C:\Windows\Prefetch\*.*
-del /s /q /f C:\Windows\System32\LogFiles\*.*
+del /s /q C:\Windows\Prefetch\*.* 2>nul
+del /s /q /f C:\Windows\System32\LogFiles\*.* 2>nul
 
-:: Limpeza de logs
-del /s /q C:\Windows\Logs\CBS\*.log
-del /s /q C:\Windows\Logs\DISM\*.log
-del /s /q C:\Windows\System32\winevt\Logs\*.evtx
-del /s /q C:\Users\%USERNAME%\AppData\Local\Microsoft\OneDrive\logs\*.log
+:: Limpeza de logs do sistema
+del /s /q C:\Windows\Logs\CBS\*.log 2>nul
+del /s /q C:\Windows\Logs\DISM\*.log 2>nul
+del /s /q C:\Windows\System32\winevt\Logs\*.evtx 2>nul
+del /s /q C:\Users\%USERNAME%\AppData\Local\Microsoft\OneDrive\logs\*.log 2>nul
 
 :: Limpeza da Lixeira
-powershell -command "Clear-RecycleBin -Force"
+powershell -command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"
 
-:: Limpeza de cache de navegadores
-del /s /q /f "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Google\Chrome\User Data\Profile*\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Microsoft\Edge\User Data\Profile*\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Vivaldi\User Data\Default\Cache\*.*"
-del /s /q /f "%LOCALAPPDATA%\Mozilla\Firefox\Profiles\*.default-release\cache2\entries\*.*"
+:: Limpeza de cache de navegadores (todos os usuários)
+for /d %%U in (C:\Users\*) do (
+    del /s /q /f "%%U\AppData\Local\Google\Chrome\User Data\Default\Cache\*.*" 2>nul
+    del /s /q /f "%%U\AppData\Local\Google\Chrome\User Data\Profile*\Cache\*.*" 2>nul
+    del /s /q /f "%%U\AppData\Local\Microsoft\Edge\User Data\Default\Cache\*.*" 2>nul
+    del /s /q /f "%%U\AppData\Local\Microsoft\Edge\User Data\Profile*\Cache\*.*" 2>nul
+    del /s /q /f "%%U\AppData\Local\Mozilla\Firefox\Profiles\*.default-release\cache2\entries\*.*" 2>nul
+)
 
 :: Limpeza de cache de programas
-del /s /q /f "%LOCALAPPDATA%\GitHubDesktop\Cache\*.*"
-del /s /q /f "%APPDATA%\Spotify\Storage\*.*"
-del /s /q /f "%APPDATA%\vlc\cache\*.*"
-del /s /q /f "%APPDATA%\TeamViewer\*.*"
-del /s /q /f "%APPDATA%\Bitwarden\Cache\*.*"
-del /s /q /f "%APPDATA%\Microsoft\Excel\*.tmp"
-del /s /q /f "%APPDATA%\Microsoft\Word\*.tmp"
-del /s /q /f "%APPDATA%\VMware\*.*"
+del /s /q /f "%LOCALAPPDATA%\GitHubDesktop\Cache\*.*" 2>nul
+del /s /q /f "%APPDATA%\Spotify\Storage\*.*" 2>nul
+del /s /q /f "%APPDATA%\vlc\cache\*.*" 2>nul
+del /s /q /f "%APPDATA%\TeamViewer\*.*" 2>nul
+del /s /q /f "%APPDATA%\Bitwarden\Cache\*.*" 2>nul
+del /s /q /f "%APPDATA%\Microsoft\Excel\*.tmp" 2>nul
+del /s /q /f "%APPDATA%\Microsoft\Word\*.tmp" 2>nul
+del /s /q /f "%APPDATA%\VMware\*.*" 2>nul
 
-:: Limpeza de disco
-cleanmgr /sagerun:1
+:: Limpeza de thumbnails
+del /s /q /f "%USERPROFILE%\AppData\Local\Microsoft\Windows\Explorer\thumbcache_*.db" 2>nul
+
+:: Limpeza de arquivos recentes
+del /s /q /f "%USERPROFILE%\AppData\Roaming\Microsoft\Windows\Recent\*.*" 2>nul
+
+:: Limpeza de disco com cleanmgr
+echo y | cleanmgr /sagerun:1 >nul 2>&1
+
+:: Limpeza de memory dumps
+del /s /q /f C:\Windows\*.dmp 2>nul
+del /s /q /f C:\Windows\Minidump\*.dmp 2>nul
 
 echo.
 echo  Limpeza completa concluida!
-pause
-goto limpeza
-
-:limpeza_avancada
-echo.
-echo  Executando limpeza avancada (Baboo)...
-call :baboo_clean
-echo.
-echo  Limpeza avancada concluida!
 pause
 goto limpeza
 
@@ -163,13 +164,13 @@ echo  Restaurando imagem do sistema...
 dism /Online /Cleanup-Image /RestoreHealth
 echo.
 echo  Executando verificação e otimização do disco...
-chkdsk /f /r
+echo y | chkdsk /f /r >nul 2>&1
 echo.
 echo  Reparando componentes do Windows Update...
 dism /Online /Cleanup-Image /StartComponentCleanup
 echo.
 echo  Corrigindo permissões de arquivos do sistema...
-powershell -Command "secedit /configure /cfg %windir%\inf\defltbase.inf /db defltbase.sdb /verbose"
+powershell -Command "secedit /configure /cfg %windir%\inf\defltbase.inf /db defltbase.sdb /verbose" 2>nul
 
 echo.
 echo  Reparo concluído! Reinicie o sistema para aplicar todas as correções.
@@ -204,22 +205,22 @@ echo.
 echo  Aplicando otimizacoes basicas...
 
 :: Acelera menus
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v MenuShowDelay /t REG_SZ /d 0 /f
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v MenuShowDelay /t REG_SZ /d 0 /f >nul 2>&1
 
 :: Reduz tempo de resposta para aplicativos travados
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v HungAppTimeout /t REG_SZ /d 2000 /f
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v WaitToKillAppTimeout /t REG_SZ /d 2000 /f
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control" /v WaitToKillServiceTimeout /t REG_SZ /d 2000 /f
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v HungAppTimeout /t REG_SZ /d 2000 /f >nul 2>&1
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v WaitToKillAppTimeout /t REG_SZ /d 2000 /f >nul 2>&1
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control" /v WaitToKillServiceTimeout /t REG_SZ /d 2000 /f >nul 2>&1
 
 :: Acelera desligamento
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v ClearPageFileAtShutdown /t REG_DWORD /d 0 /f
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v ClearPageFileAtShutdown /t REG_DWORD /d 0 /f >nul 2>&1
 
 :: Desativa relatórios de erro
-reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v Disabled /t REG_DWORD /d 1 /f
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting" /v Disabled /t REG_DWORD /d 1 /f >nul 2>&1
 
 :: Reinicia o Explorer para aplicar mudanças
-taskkill /f /im explorer.exe
-start explorer.exe
+taskkill /f /im explorer.exe >nul 2>&1
+start explorer.exe >nul 2>&1
 
 echo.
 echo  Otimizacoes basicas aplicadas!
@@ -231,27 +232,55 @@ echo.
 echo  Aplicando otimizacoes de desempenho...
 
 :: Configura plano de energia para Alto Desempenho
-powercfg /s SCHEME_MIN
+powercfg /s SCHEME_MIN >nul 2>&1
 
 :: Desativa efeitos visuais
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v DragFullWindows /t REG_SZ /d 0 /f
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v MenuAnimation /t REG_SZ /d 0 /f
-reg add "HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics" /v MinAnimate /t REG_SZ /d 0 /f
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v DragFullWindows /t REG_SZ /d 0 /f >nul 2>&1
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop" /v MenuAnimation /t REG_SZ /d 0 /f >nul 2>&1
+reg add "HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics" /v MinAnimate /t REG_SZ /d 0 /f >nul 2>&1
 
 :: Remove sombra de janelas
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ListviewAlphaSelect /t REG_DWORD /d 0 /f
-reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAnimations /t REG_DWORD /d 0 /f
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ListviewAlphaSelect /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarAnimations /t REG_DWORD /d 0 /f >nul 2>&1
 
 :: Otimizações para SSD
-fstype | find "NTFS" && (fsutil behavior set DisableDeleteNotify 0)
-wmic diskdrive where "MediaType='Fixed hard disk media'" set WriteCacheEnabled=true
-wmic diskdrive where "MediaType='Fixed hard disk media'" set WriteCacheType=1
+fsutil behavior query DisableDeleteNotify >nul 2>&1 && (
+    fsutil behavior set DisableDeleteNotify 0 >nul 2>&1
+)
+wmic diskdrive where "MediaType='Fixed hard disk media'" set WriteCacheEnabled=true >nul 2>&1
+wmic diskdrive where "MediaType='Fixed hard disk media'" set WriteCacheType=1 >nul 2>&1
 
 :: Desativa serviços desnecessários
-sc config DiagTrack start= disabled
-sc config dmwappushservice start= disabled
-sc stop DiagTrack
-sc stop dmwappushservice
+sc config DiagTrack start= disabled >nul 2>&1
+sc config dmwappushservice start= disabled >nul 2>&1
+sc stop DiagTrack >nul 2>&1
+sc stop dmwappushservice >nul 2>&1
+
+:: --- NOVAS OTIMIZACOES ADICIONADAS ---
+echo.
+echo  Aplicando otimizacoes avançadas...
+
+:: Otimizações de Interface e Performance
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoWindowMinimizingAnimation" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoUseDwordAnimation" /t REG_DWORD /d 1 /f >nul 2>&1
+
+:: Otimizar Agendador de Tarefas
+reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\PriorityControl" /v "Win32PrioritySeparation" /t REG_DWORD /d 38 /f >nul 2>&1
+
+:: Limpeza de Atualizações
+reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v "SetBehavior" /t REG_DWORD /d 7 /f >nul 2>&1
+
+:: Verifica se o sistema tem 16GB+ de RAM antes de aplicar otimizações de memória
+for /f "tokens=*" %%i in ('wmic computersystem get TotalPhysicalMemory ^| findstr [0-9]') do set totalmem=%%i
+set /a totalmemgb=%totalmem:~0,-3%/1048576
+
+if %totalmemgb% geq 16 (
+    echo  Aplicando otimizacoes de memoria para sistema com 16GB+ RAM...
+    reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "DisablePagingExecutive" /t REG_DWORD /d 1 /f >nul 2>&1
+    reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v "ClearPageFileAtShutdown" /t REG_DWORD /d 0 /f >nul 2>&1
+) else (
+    echo  Sistema com menos de 16GB RAM - Pulando otimizacoes de memoria avancadas...
+)
 
 echo.
 echo  Otimizacoes de desempenho aplicadas!
@@ -263,16 +292,16 @@ echo.
 echo  Aplicando otimizacoes de rede...
 
 :: Melhora desempenho da rede
-netsh interface tcp set global autotuninglevel=normal
-netsh interface tcp set global rss=enabled
-netsh int tcp set global chimney=enabled
+netsh interface tcp set global autotuninglevel=normal >nul 2>&1
+netsh interface tcp set global rss=enabled >nul 2>&1
+netsh int tcp set global chimney=enabled >nul 2>&1
 
 :: Redefinição de configuração de rede
-netsh winsock reset
-netsh int ip reset
-ipconfig /release
-ipconfig /renew
-ipconfig /flushdns
+netsh winsock reset >nul 2>&1
+netsh int ip reset >nul 2>&1
+ipconfig /release >nul 2>&1
+ipconfig /renew >nul 2>&1
+ipconfig /flushdns >nul 2>&1
 
 echo.
 echo  Otimizacoes de rede aplicadas!
@@ -356,14 +385,14 @@ echo.
 echo  Verificando e instalando Winget...
 where winget >nul 2>&1 || (
     echo Instalando Winget...
-    powershell -Command "Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile winget.appxbundle"
-    powershell -Command "Add-AppxPackage winget.appxbundle"
+    powershell -Command "Invoke-WebRequest -Uri https://aka.ms/getwinget -OutFile winget.appxbundle -ErrorAction SilentlyContinue"
+    powershell -Command "Add-AppxPackage winget.appxbundle -ErrorAction SilentlyContinue"
 )
 
 echo  Verificando e instalando Chocolatey...
 where choco >nul 2>&1 || (
     echo Instalando Chocolatey...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) -ErrorAction SilentlyContinue"
 )
 
 echo.
@@ -375,9 +404,9 @@ goto atualizacao
 echo.
 echo  Atualizando todos os programas...
 
-where winget >nul 2>&1 && winget upgrade --all --silent || echo  Winget não encontrado, pulando etapa.
+where winget >nul 2>&1 && winget upgrade --all --silent --accept-package-agreements --accept-source-agreements || echo  Winget não encontrado, pulando etapa.
 where choco >nul 2>&1 && choco upgrade all -y || echo  Chocolatey não encontrado, pulando etapa.
-powershell -Command "Start-Process powershell -ArgumentList '-Command Install-WindowsUpdate -AcceptAll -AutoReboot' -Verb RunAs"
+powershell -Command "Start-Process powershell -ArgumentList '-Command Install-WindowsUpdate -AcceptAll -AutoReboot' -Verb RunAs" 2>nul
 
 echo.
 echo  Atualização concluída!
@@ -387,7 +416,7 @@ goto atualizacao
 :atualizar_winget
 echo.
 echo  Atualizando programas via Winget...
-where winget >nul 2>&1 && winget upgrade --all --silent || echo  Winget não encontrado!
+where winget >nul 2>&1 && winget upgrade --all --silent --accept-package-agreements --accept-source-agreements || echo  Winget não encontrado!
 echo.
 echo  Atualização concluída!
 pause
@@ -405,7 +434,7 @@ goto atualizacao
 :atualizar_windows
 echo.
 echo  Executando Windows Update...
-powershell -Command "Start-Process powershell -ArgumentList '-Command Install-WindowsUpdate -AcceptAll -AutoReboot' -Verb RunAs"
+powershell -Command "Start-Process powershell -ArgumentList '-Command Install-WindowsUpdate -AcceptAll -AutoReboot' -Verb RunAs" 2>nul
 echo.
 echo  Atualização concluída!
 pause
@@ -491,7 +520,7 @@ netsh int ipv6 reset reset.log
 netsh interface tcp set global autotuninglevel=restricted
 echo.
 echo  Verificando problemas comuns...
-powershell -Command "Test-NetConnection -ComputerName google.com -Port 80"
+powershell -Command "Test-NetConnection -ComputerName google.com -Port 80 -ErrorAction SilentlyContinue"
 echo.
 echo  Diagnóstico concluído!
 pause
@@ -550,7 +579,7 @@ echo  Parando serviço de spooler de impressão...
 net stop spooler
 echo.
 echo  Limpando arquivos de cache de impressão...
-del /q /f /s "%systemroot%\system32\spool\printers\*.*"
+del /q /f /s "%systemroot%\system32\spool\printers\*.*" 2>nul
 echo.
 echo  Iniciando serviço de spooler de impressão...
 net start spooler
@@ -572,7 +601,7 @@ goto manutencao_impressao
 :desativar_spooler
 echo.
 echo  Desativando serviço de spooler de impressão...
-sc config spooler start= disabled
+sc config spooler start= disabled >nul 2>&1
 net stop spooler
 echo.
 echo  Serviço de impressão desativado!
@@ -582,7 +611,7 @@ goto manutencao_impressao
 :ativar_spooler
 echo.
 echo  Ativando serviço de spooler de impressão...
-sc config spooler start= auto
+sc config spooler start= auto >nul 2>&1
 net start spooler
 echo.
 echo  Serviço de impressão ativado!
@@ -680,91 +709,4 @@ echo Configuracoes restauradas para os valores padrao.
 pause
 goto configuracoes
 
-:baboo_clean
-REM ******************** LIXEIRA ********************
-del c:\$recycle.bin\* /s /q
-PowerShell.exe -NoProfile -Command Clear-RecycleBin -Confirm:$false >$null
-del $null
-
-REM ******************** PASTA TEMP DOS USUÁRIOS ********************
-for /d %%F in (C:\Users\*) do (Powershell.exe Remove-Item -Path "%%F\AppData\Local\Temp\*" -Recurse -Force)
-for /d %%F in (C:\Users\*) do type nul >"%%F\Appdata\Local\Temp\vazio.txt"
-for /d %%F in (C:\Users\*) do robocopy %%F\AppData\Local\Temp\ %%F\AppData\Local\Temp\ /s /move /NFL /NDL /NJH /NJS /nc /ns /np
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Temp\vazio.txt
-
-REM ******************** WINDOWS TEMP ********************
-del c:\Windows\Temp\* /s /q
-type nul > c:\Windows\Temp\vazio.txt
-robocopy c:\Windows\Temp c:\Windows\Temp /s /move /NFL /NDL /NJH /NJS /nc /ns /np
-del c:\Windows\Temp\vazio.txt
-
-REM ******************** ARQUIVOS DE LOG DO WINDOWS ********************
-del C:\Windows\Logs\cbs\*.log
-del C:\Windows\setupact.log
-attrib -s c:\windows\logs\measuredboot\*.*
-del c:\windows\logs\measuredboot\*.log
-attrib -h -s C:\Windows\ServiceProfiles\NetworkService\
-attrib -h -s C:\Windows\ServiceProfiles\LocalService\
-del C:\Windows\ServiceProfiles\LocalService\AppData\Local\Temp\MpCmdRun.log
-del C:\Windows\ServiceProfiles\NetworkService\AppData\Local\Temp\MpCmdRun.log
-attrib +h +s C:\Windows\ServiceProfiles\NetworkService\
-attrib +h +s C:\Windows\ServiceProfiles\LocalService\
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Microsoft\*.log /s /q
-del C:\Windows\Logs\MeasuredBoot\*.log 
-del C:\Windows\Logs\MoSetup\*.log
-del C:\Windows\Panther\*.log /s /q
-del C:\Windows\Performance\WinSAT\winsat.log /s /q
-del C:\Windows\inf\*.log /s /q
-del C:\Windows\logs\*.log /s /q
-del C:\Windows\SoftwareDistribution\*.log /s /q
-del C:\Windows\Microsoft.NET\*.log /s /q
-
-REM ******************** ARQUIVOS DE LOG DO ONEDRIVE ********************
-taskkill /F /IM "OneDrive.exe"
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Microsoft\OneDrive\setup\logs\*.log /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Microsoft\OneDrive\*.odl /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Microsoft\OneDrive\*.aodl /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Microsoft\OneDrive\*.otc /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\OneDrive\*.qmlc /s /q
-
-REM ******************** NAVEGADORES (Chrome, Edge, Firefox, Brave, Vivaldi) ********************
-taskkill /F /IM "msedge.exe"
-taskkill /F /IM "chrome.exe"
-taskkill /F /IM "firefox.exe"
-taskkill /F /IM "brave.exe"
-taskkill /F /IM "vivaldi.exe"
-
-REM Limpeza genérica para todos os navegadores
-for /d %%F in (C:\Users\*) do (
-    del %%F\AppData\Local\Microsoft\Edge\User Data\*\Cache\*.* /s /q
-    del %%F\AppData\Local\Google\Chrome\User Data\*\Cache\*.* /s /q
-    del %%F\AppData\Local\BraveSoftware\Brave-Browser\User Data\*\Cache\*.* /s /q
-    del %%F\AppData\Local\Vivaldi\User Data\*\Cache\*.* /s /q
-    del %%F\AppData\Local\Mozilla\Firefox\Profiles\*.default-release\cache2\entries\*.* /s /q
-)
-
-REM ******************** SPOTIFY ********************
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Spotify\Data\*.file /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Spotify\Browser\Cache\"Cache_Data"\f*. /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Local\Spotify\Browser\GPUCache\*. /s /q
-
-REM ******************** ADOBE MEDIA CACHE FILES ********************
-for /d %%F in (C:\Users\*) do del %%F\AppData\Roaming\Adobe\Common\"Media Cache files"\*.* /s /q
-for /d %%F in (C:\Users\*) do del %%F\AppData\Roaming\Adobe\*.log /s /q
-
-REM ******************** VMWARE ********************
-del C:\ProgramData\VMware\logs\*.log /s /q
-
-REM ******************** TeamViewer ********************
-for /l %%i in (1,1,12) do (for /d %%F in (C:\Users\*) do del %%F\AppData\Local\TeamViewer\EdgeBrowserControl\Persistent\data_*.  /s /q)
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_0 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_1 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_2 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_3 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_4 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /S /M *_5 /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /M "f_*." /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /M "data.*" /C "cmd /c del @path"))
-for /d %%u in (C:\Users\*) do (if exist "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" (forfiles /P "%%u\AppData\Local\TeamViewer\EdgeBrowserControl" /M "index.*" /C "cmd /c del @path"))
-
-goto :eof
+exit
