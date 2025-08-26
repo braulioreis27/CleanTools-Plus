@@ -1,5 +1,5 @@
 @echo off
-:: CleanTools Plus v3.1 - Versão Corrigida e Otimizada
+:: CleanTools Plus v4.0 - Versão Aprimorada e Otimizada
 :: Implementa as funcionalidades mais úteis para ambos os públicos
 
 setlocal enabledelayedexpansion
@@ -11,7 +11,7 @@ setlocal enabledelayedexpansion
 :init
 mode con: cols=80 lines=30
 color 0A
-title CleanTools Plus v3.1 - Otimizador do Windows
+title CleanTools Plus v4.0 - Otimizador do Windows
 
 :: Verificar privilégios de administrador
 net session >nul 2>&1
@@ -25,7 +25,7 @@ if %errorLevel% neq 0 (
 :: Configurar sistema de logging
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set datetime=%%a
 set LOG_FILE=%TEMP%\CleanTools_%datetime:~0,8%.log
-echo [%TIME%] Iniciando CleanTools Plus v3.1 >> "%LOG_FILE%"
+echo [%TIME%] Iniciando CleanTools Plus v4.0 >> "%LOG_FILE%"
 echo [%TIME%] Usuario: %USERNAME% >> "%LOG_FILE%"
 echo [%TIME%] Sistema: %COMPUTERNAME% >> "%LOG_FILE%"
 
@@ -44,11 +44,14 @@ set /a total_runs+=1
 echo total_runs=!total_runs! > "%USERPROFILE%\CleanTools_stats.txt"
 echo last_run=%DATE% %TIME% >> "%USERPROFILE%\CleanTools_stats.txt"
 
+:: Verificar dependências
+call :check_dependencies
+
 :: Menu principal melhorado
 :menu
 cls
 echo ==================================================
-echo         MANUTENCAO COMPLETA DO WINDOWS v3.1
+echo         MANUTENCAO COMPLETA DO WINDOWS v4.0
 echo ==================================================
 echo.
 echo 1 - LIMPEZA DO SISTEMA (Modo Seguro)
@@ -102,7 +105,7 @@ goto limpeza
 :limpeza_basica
 echo.
 echo [%TIME%] Iniciando limpeza basica >> "%LOG_FILE%"
-call :show_progress "Iniciando limpeza basica..."
+call :animated_progress "Limpando arquivos temporarios" 20
 
 :: Limpeza de arquivos temporários
 if exist "%temp%" (
@@ -114,7 +117,7 @@ if exist "%temp%" (
 if exist "C:\Windows\Temp" del /q /f /s "C:\Windows\Temp\*.*" 2>nul
 if exist "%USERPROFILE%\AppData\Local\Temp" del /q /f /s "%USERPROFILE%\AppData\Local\Temp\*.*" 2>nul
 
-:: Limpeza da Lixeira
+call :animated_progress "Limpando lixeira" 10
 powershell -command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue" 2>nul
 
 call :show_progress "Limpeza basica concluida!"
@@ -125,12 +128,11 @@ goto limpeza
 :limpeza_completa
 echo.
 echo [%TIME%] Iniciando limpeza completa >> "%LOG_FILE%"
-call :show_progress "Iniciando limpeza completa..."
 
 :: Criar ponto de restauração
 call :create_restore_point
 
-:: Limpeza completa
+call :animated_progress "Limpando arquivos temporarios" 25
 if exist "%temp%" (
     del /q /f /s "%temp%\*.*" 2>nul
     rd /q /s "%temp%" 2>nul
@@ -141,15 +143,15 @@ if exist "C:\Windows\Temp" del /q /f /s "C:\Windows\Temp\*.*" 2>nul
 if exist "%USERPROFILE%\AppData\Local\Temp" del /q /f /s "%USERPROFILE%\AppData\Local\Temp\*.*" 2>nul
 if exist "C:\Users\Public\Temp" del /q /f /s "C:\Users\Public\Temp\*.*" 2>nul
 
-:: Limpeza de cache
+call :animated_progress "Limpando cache do sistema" 20
 if exist "C:\Windows\Prefetch" del /q /f /s "C:\Windows\Prefetch\*.*" 2>nul
 if exist "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache" del /q /f /s "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*" 2>nul
 if exist "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache" del /q /f /s "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*" 2>nul
 
-:: Limpeza da Lixeira
+call :animated_progress "Limpando lixeira" 10
 powershell -command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue" 2>nul
 
-:: Limpeza de disco
+call :animated_progress "Otimizando espaco em disco" 15
 if exist "C:\Windows\System32\cleanmgr.exe" (
     cleanmgr /sagerun:1 >nul 2>&1
 )
@@ -174,7 +176,8 @@ echo 2 - Otimizador de Servicos do Windows
 echo 3 - Verificador de Seguranca
 echo 4 - Analisador de Saude do Disco
 echo 5 - Relatorio Tecnico Completo
-echo 6 - Voltar ao Menu Principal
+echo 6 - Backup do Registro
+echo 7 - Voltar ao Menu Principal
 echo.
 set /p "escolha=Escolha uma opcao: "
 
@@ -183,7 +186,8 @@ if "!escolha!"=="2" goto service_optimizer
 if "!escolha!"=="3" goto security_check
 if "!escolha!"=="4" goto disk_health
 if "!escolha!"=="5" goto full_report
-if "!escolha!"=="6" goto menu
+if "!escolha!"=="6" goto backup_registry
+if "!escolha!"=="7" goto menu
 echo Opcao invalida!
 pause
 goto avancado
@@ -195,6 +199,7 @@ echo  Programas que iniciam com o Windows:
 echo.
 wmic startup get caption, command 2>nul | more
 echo.
+call :context_help startup
 pause
 goto avancado
 
@@ -253,6 +258,16 @@ echo  Gerando relatorio completo...
 systeminfo > "%TEMP%\system_info.txt" 2>nul
 wmic diskdrive get status,model,size > "%TEMP%\disk_info.txt" 2>nul
 echo Relatorio salvo em: %TEMP%\system_info.txt
+echo.
+pause
+goto avancado
+
+:backup_registry
+echo.
+echo [%TIME%] Criando backup do registro >> "%LOG_FILE%"
+reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer" "%TEMP%\backup_explorer.reg" >nul 2>&1
+reg export "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control" "%TEMP%\backup_system.reg" >nul 2>&1
+echo Backup do registro criado em: %TEMP%\
 echo.
 pause
 goto avancado
@@ -318,7 +333,7 @@ goto relatorio
 echo.
 echo  Programas instalados (ultimos 10):
 echo.
-wmic product get name, version 2>nul | head -n 11
+wmic product get name, version 2>nul | findstr /n "." | findstr "^[1-9]: ^10:" 2>nul
 echo.
 pause
 goto relatorio
@@ -352,6 +367,23 @@ timeout /t 1 /nobreak >nul
 endlocal
 exit /b 0
 
+:animated_progress
+setlocal
+set "task=%~1"
+set "steps=%~2"
+echo !task!
+for /l %%i in (1,1,!steps!) do (
+    set /a "percent=%%i*100/steps"
+    set "bar="
+    for /l %%j in (1,1,20) do (
+        if %%j leq !percent!/5 (set "bar=!bar!█") else (set "bar=!bar!░")
+    )
+    echo [!bar!] !percent!%%
+    ping -n 1 -w 50 127.0.0.1 >nul
+)
+endlocal
+exit /b 0
+
 :create_restore_point
 echo [%TIME%] Criando ponto de restauracao >> "%LOG_FILE%"
 powershell -Command "Checkpoint-Computer -Description \"CleanTools Plus Restore Point\" -RestorePointType MODIFY_SETTINGS" 2>nul
@@ -362,6 +394,52 @@ if !errorlevel! equ 0 (
     echo Nao foi possivel criar ponto de restauracao
     echo [%TIME%] Erro ao criar ponto de restauracao >> "%LOG_FILE%"
 )
+exit /b 0
+
+:check_dependencies
+where powershell >nul || (
+    echo [ERRO] PowerShell não encontrado! >> "%LOG_FILE%"
+    echo [ALERTA] Algumas funcionalidades podem não funcionar
+)
+where reg >nul || (
+    echo [ERRO] Utilitário REG não disponível >> "%LOG_FILE%"
+    echo [ALERTA] Otimizações de registro desativadas
+)
+exit /b 0
+
+:context_help
+if "%~1"=="startup" (
+    echo.
+    echo [AJUDA] Estes programas iniciam automaticamente com o Windows.
+    echo         Desative programas desnecessarios para melhorar o tempo de inicializacao.
+)
+if "%~1"=="limpeza" (
+    echo.
+    echo [AJUDA] Limpeza remove arquivos temporários, cache e otimiza espaço
+    echo         Use a opção Basica para manutenção rápida
+    echo         Use a Completa para limpeza profunda mensal
+)
+exit /b 0
+
+:memory_optimizer
+echo Otimizando memória...
+:: Libera memória não utilizada
+powershell -Command "
+    \$mem = Get-WmiObject -Class Win32_OperatingSystem
+    \$freemem = [math]::Round(\$mem.FreePhysicalMemory / 1MB, 2)
+    Write-Host \"Memoria livre antes: \$freemem GB\"
+    
+    \$shell = New-Object -ComObject Shell.Application
+    \$shell.MinimizeAll()
+    
+    Start-Sleep -Seconds 2
+    \[System.GC\]::Collect()
+    \[System.GC\]::WaitForPendingFinalizers()
+    
+    \$mem = Get-WmiObject -Class Win32_OperatingSystem
+    \$freemem = [math]::Round(\$mem.FreePhysicalMemory / 1MB, 2)
+    Write-Host \"Memoria livre depois: \$freemem GB\"
+" 2>nul
 exit /b 0
 
 :: ==================================================
@@ -408,7 +486,8 @@ echo 1 - Otimizacoes Basicas
 echo 2 - Otimizacoes de Desempenho
 echo 3 - Otimizacoes de Rede
 echo 4 - Gerenciar Armazenamento Reservado
-echo 5 - Voltar ao Menu Principal
+echo 5 - Otimizador de Memoria
+echo 6 - Voltar ao Menu Principal
 echo.
 set /p "escolha=Escolha o tipo de otimizacao: "
 
@@ -416,7 +495,8 @@ if "!escolha!"=="1" goto otimizacao_basica
 if "!escolha!"=="2" goto otimizacao_desempenho
 if "!escolha!"=="3" goto otimizacao_rede
 if "!escolha!"=="4" goto gerenciar_armazenamento_reservado
-if "!escolha!"=="5" goto menu
+if "!escolha!"=="5" goto memory_optimizer
+if "!escolha!"=="6" goto menu
 echo Opcao invalida!
 pause
 goto otimizacao
@@ -547,6 +627,15 @@ echo  Armazenamento Reservado desabilitado!
 pause
 goto gerenciar_armazenamento_reservado
 
+:memory_optimizer
+echo.
+echo  Otimizando memoria...
+call :memory_optimizer
+echo.
+echo  Otimizacao de memoria concluida!
+pause
+goto otimizacao
+
 :atualizacao
 cls
 echo ==================================================
@@ -641,14 +730,16 @@ echo.
 echo 1 - Ativar/Desativar Reinicio Automatico
 echo 2 - Ativar/Desativar Modo Verbose
 echo 3 - Restaurar Configuracoes Padrao
-echo 4 - Voltar ao Menu Principal
+echo 4 - Selecionar Tema
+echo 5 - Voltar ao Menu Principal
 echo.
 set /p "escolha=Escolha uma opcao: "
 
 if "!escolha!"=="1" goto toggle_reboot
 if "!escolha!"=="2" goto toggle_verbose
 if "!escolha!"=="3" goto reset_config
-if "!escolha!"=="4" goto menu
+if "!escolha!"=="4" goto theme_manager
+if "!escolha!"=="5" goto menu
 echo Opcao invalida!
 pause
 goto configuracoes
@@ -679,6 +770,23 @@ goto configuracoes
 if exist "reboot_enabled.txt" del "reboot_enabled.txt"
 if exist "verbose_enabled.txt" del "verbose_enabled.txt"
 echo Configuracoes restauradas para os valores padrao.
+pause
+goto configuracoes
+
+:theme_manager
+echo.
+echo  Selecione o tema:
+echo  1 - Padrao (Verde)
+echo  2 - Azul Profissional
+echo  3 - Escuro
+echo  4 - Vermelho Alerta
+set /p "theme_choice=Escolha: "
+
+if "!theme_choice!"=="1" color 0A
+if "!theme_choice!"=="2" color 01
+if "!theme_choice!"=="3" color 08
+if "!theme_choice!"=="4" color 04
+echo Tema alterado com sucesso!
 pause
 goto configuracoes
 
@@ -735,7 +843,7 @@ exit /b 0
 :end
 echo [%TIME%] CleanTools Plus finalizado >> "%LOG_FILE%"
 echo.
-echo Obrigado por usar CleanTools Plus v3.1!
+echo Obrigado por usar CleanTools Plus v4.0!
 echo.
 pause
 exit /b 0
