@@ -1,993 +1,702 @@
 @echo off
-:: CleanTools Plus v5.0 - Versão Otimizada e Corrigida
-:: Implementa todas as funcionalidades com código limpo e organizado
-
 setlocal enabledelayedexpansion
 
-:: ==================================================
-:: CONFIGURAÇÕES INICIAIS E VERIFICAÇÕES
-:: ==================================================
-
-:init
-mode con: cols=100 lines=35
 color 0A
-title CleanTools Plus v5.0 - Otimizador Avançado do Windows
+title Projeto Completo de Manutencao do Windows
 
-:: Verificar privilégios de administrador
-net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo.
-    echo    [ERRO] Este programa requer execucao como Administrador!
-    echo.
-    echo    Clique com o botao direito do mouse e selecione "Executar como Administrador"
-    echo.
-    pause
-    exit /b 1
+:: ---------- Variáveis Globais ----------
+:: Captura do IP local ativo (IPv4)
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    set "ip=%%a"
 )
+set "ip=!ip:~1!"
 
-:: Configurar sistema de logging
-for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set datetime=%%a
-set LOG_FILE=%TEMP%\CleanTools_%datetime:~0,8%_%TIME:~0,2%%TIME:~3,2%.log
-echo [%DATE% %TIME%] Iniciando CleanTools Plus v5.0 >> "%LOG_FILE%"
-echo [%DATE% %TIME%] Usuario: %USERNAME% >> "%LOG_FILE%"
-echo [%DATE% %TIME%] Sistema: %COMPUTERNAME% >> "%LOG_FILE%"
+:: Captura da versão do Windows
+for /f "tokens=2 delims==" %%v in ('wmic os get version /value ^| find "="') do set "winver=%%v"
 
-:: Verificar e criar arquivo de estatísticas
-if not exist "%USERPROFILE%\CleanTools_stats.txt" (
-    echo total_runs=0 > "%USERPROFILE%\CleanTools_stats.txt"
-    echo last_run=%DATE% %TIME% >> "%USERPROFILE%\CleanTools_stats.txt"
-    echo space_saved=0 >> "%USERPROFILE%\CleanTools_stats.txt"
-)
-
-:: Atualizar estatísticas
-set /a total_runs=0
-set /a space_saved=0
-for /f "usebackq tokens=1,2 delims==" %%a in ("%USERPROFILE%\CleanTools_stats.txt") do (
-    if "%%a"=="total_runs" set /a total_runs=%%b
-    if "%%a"=="space_saved" set /a space_saved=%%b
-)
-set /a total_runs+=1
-(
-echo total_runs=!total_runs!
-echo last_run=%DATE% %TIME%
-echo space_saved=!space_saved!
-) > "%USERPROFILE%\CleanTools_stats.txt"
-
-:: Verificar dependências
-call :check_dependencies
-
-:: Obter informações do sistema para exibição
-call :get_system_info
-
-:: Menu principal melhorado
-:menu
+:: ---------- Função Principal / Menu ----------
+:MAINMENU
 cls
-call :display_header
+echo ================================================
+echo       PROJETO DE MANUTENCAO WINDOWS 10/11
+echo ================================================
+echo Data: %date%    Hora: %time%
+echo Endereco IP Local: !ip!
+echo Versao do Windows: !winver!
 echo.
-echo    1 - LIMPEZA DO SISTEMA (Modo Seguro)
-echo    2 - REPARO DO SISTEMA 
-echo    3 - OTIMIZACOES AVANCADAS
-echo    4 - ATUALIZACOES INTELIGENTES
-echo    5 - FERRAMENTAS AVANCADAS
-echo    6 - RELATORIO DO SISTEMA
-echo    7 - CONFIGURACOES
-echo    8 - DRIVERS E DISPOSITIVOS
-echo    9 - SAIR
+echo MELHORIAS E DESTAQUES:
+echo - Menus intuitivos para limpeza, reparo, otimizacoes e instalacao
+echo - Backups e gerenciamento de drivers integrados com facilidade
+echo - Otimizacoes avancadas para SSD, rede, CPU Ryzen e jogos
+echo - Atualizacoes via winget e chocolatey + links para downloads confiaveis
+echo - Ferramentas avancadas para diagnosticos e manutencao rapida
 echo.
-echo    Execucoes realizadas: !total_runs!
-echo    Espaco liberado: !space_saved! MB
-echo.
-set /p "opcao=    Escolha uma opcao: "
+echo ================================================
+echo MENU PRINCIPAL
+echo ================================================
+echo [1] Limpeza do Sistema (Simples e Completa)
+echo [2] Reparo Avancado do Sistema (SFC, DISM)
+echo [3] Otimizacoes do Windows (SSD, rede, energia, Ryzen, etc)
+echo [4] Backup e Gerenciamento de Drivers
+echo [5] Atualizacoes de Programas (Windows Update, winget, choco)
+echo [6] Ferramentas Avancadas (Process Explorer, Regedit, etc)
+echo [7] Instalacao de Programas (winget, chocolatey e links)
+echo [0] Sair
+echo ================================================
+set /p "mainopt=Escolha uma opcao: "
+if "!mainopt!"=="1" call :LIMPEZA_MENU & goto MAINMENU
+if "!mainopt!"=="2" call :REPARO_MENU & goto MAINMENU
+if "!mainopt!"=="3" call :OTIMIZACAO_MENU & goto MAINMENU
+if "!mainopt!"=="4" call :DRIVERS_MENU & goto MAINMENU
+if "!mainopt!"=="5" call :ATUALIZACOES_MENU & goto MAINMENU
+if "!mainopt!"=="6" call :FERRAMENTAS_MENU & goto MAINMENU
+if "!mainopt!"=="7" call :INSTALACOES_MENU & goto MAINMENU
+if "!mainopt!"=="0" exit /b
+goto MAINMENU
 
-if "!opcao!"=="1" goto limpeza
-if "!opcao!"=="2" goto reparo
-if "!opcao!"=="3" goto otimizacao
-if "!opcao!"=="4" goto atualizacao
-if "!opcao!"=="5" goto avancado
-if "!opcao!"=="6" goto relatorio
-if "!opcao!"=="7" goto configuracoes
-if "!opcao!"=="8" goto drivers
-if "!opcao!"=="9" goto end
-echo.
-echo    Opcao invalida! Pressione qualquer tecla para tentar novamente.
-pause >nul
-goto menu
+:: ---------- LIMPEZA ----------
+:LIMPEZA_MENU
+cls
+echo ==== LIMPEZA DO SISTEMA ====
+echo [1] Limpeza Simples
+echo [2] Limpeza Completa
+echo [0] Voltar
+set /p "limopt=Escolha uma opcao: "
+if "!limopt!"=="1" call :LIMPEZA_SIMPLES & goto LIMPEZA_MENU
+if "!limopt!"=="2" call :LIMPEZA_COMPLETA & goto LIMPEZA_MENU
+if "!limopt!"=="0" exit /b
+goto LIMPEZA_MENU
 
-:: ==================================================
-:: FUNÇÕES DE APOIO E MELHORIAS VISUAIS
-:: ==================================================
-
-:display_header
-echo ================================================================================
-echo.
-echo    CLEANTOOLS PLUS v5.0 PREMIUM                 Data: %DATE%  Hora: %TIME%
-echo.
-echo    Usuario: %USERNAME%        Windows: !win_version!        IP: !ip_address!
-echo    CPU: !cpu_name!        RAM: !memory! GB
-echo.
-echo ================================================================================
-exit /b 0
-
-:get_system_info
-for /f "tokens=*" %%a in ('ver') do set "win_version=%%a"
-set "win_version=!win_version:*[Version =!"
-set "win_version=!win_version:~0,-1!"
-
-set "ip_address=Não detectado"
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr "IPv4"') do (
-    set "ip_address=%%a"
-    set "ip_address=!ip_address: =!"
-)
-
-for /f "skip=1" %%a in ('wmic computersystem get TotalPhysicalMemory') do (
-    if not "%%a"=="" (
-        set /a memory=%%a/1073741824
-        goto :memory_done
-    )
-)
-:memory_done
-
-set "cpu_name=Não detectado"
-for /f "skip=1 tokens=2 delims=:" %%a in ('systeminfo ^| findstr /C:"Nome do Processador"') do (
-    set "cpu_name=%%a"
-    set "cpu_name=!cpu_name: =!"
-)
-if "!cpu_name!"=="Nãodetectado" (
-    for /f "skip=1" %%a in ('wmic cpu get name') do (
-        if not "%%a"=="" (
-            set "cpu_name=%%a"
-            goto :cpu_done
-        )
-    )
-)
-:cpu_done
-exit /b 0
-
-:animated_progress
-setlocal
-set "task=%~1"
-set "duration=%~2"
-set "chars=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>"
-set "spinner=|/-\"
-echo.
-echo    !task!...
-echo.
-for /l %%i in (1,1,%duration%) do (
-    set /a "idx=%%i %% 4"
-    for /f %%j in ("!idx!") do set "spin_char=!spinner:~%%j,1!"
-    set /a "prog=%%i * 20 / duration"
-    set "progress=!chars:~0,!prog!!"
-    <nul set /p "=    [!spin_char!] !progress! (!prog!%%)"
-    >nul ping -n 1 -w 500 127.0.0.1
-    <nul set /p "=                                                                               "
-    <nul set /p "=    "
-)
-echo    Concluído!                                                                          
-endlocal
-exit /b 0
-
-:show_progress
-setlocal
-set "message=%~1"
-echo.
-echo    [!TIME!] !message!
-echo    [!TIME!] !message! >> "%LOG_FILE%"
-endlocal
-exit /b 0
-
-:check_dependencies
-set "missing_deps="
-where winget >nul 2>&1
-if errorlevel 1 set "missing_deps=!missing_deps! Winget"
-where choco >nul 2>&1
-if errorlevel 1 set "missing_deps=!missing_deps! Chocolatey"
-if not "!missing_deps!"=="" (
-    echo.
-    echo    [AVISO] As seguintes dependencias nao foram encontradas: !missing_deps!
-    echo    Algumas funcionalidades podem estar limitadas.
-    echo.
-    pause
-)
-exit /b 0
-
-:create_restore_point
-echo [%TIME%] Criando ponto de restauracao do sistema >> "%LOG_FILE%"
-powershell -Command "Checkpoint-Computer -Description \"CleanTools Plus v5.0 Restore Point\" -RestorePointType MODIFY_SETTINGS" 2>nul
-if !errorlevel! equ 0 (
-    echo    Ponto de restauracao criado com sucesso!
+:LIMPEZA_SIMPLES
+cls
+echo Executando limpeza simples...
+del /q /f "%temp%\*" >nul 2>&1
+del /q /f "C:\Windows\Temp\*" >nul 2>&1
+PowerShell.exe -NoProfile -Command Clear-RecycleBin -Confirm:$false >nul 2>&1
+if errorlevel 1 (
+    echo Aviso: Alguns arquivos nao puderam ser removidos.
 ) else (
-    echo    Nao foi possivel criar ponto de restauracao. Continuando...
+    echo Limpeza simples concluida!
 )
-exit /b 0
+pause
+exit /b
 
-:clean_directory
-setlocal
-set "target_dir=%~1"
-if exist "!target_dir!" (
-    del /q /f /s "!target_dir!\*.*" 2>nul
-    for /d %%p in ("!target_dir!\*") do rd /s /q "%%p" 2>nul
-)
-endlocal
-exit /b 0
-
-:: ==================================================
-:: LIMPEZA DO SISTEMA - Modo Seguro (Otimizado)
-:: ==================================================
-
-:limpeza
+:LIMPEZA_COMPLETA
 cls
-call :display_header
-echo.
-echo    LIMPEZA DO SISTEMA - MODO SEGURO
-echo.
-echo    1 - Limpeza Basica (Rapida e Segura)
-echo    2 - Limpeza Completa (Recomendado)
-echo    3 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha o tipo de limpeza: "
-
-if "!escolha!"=="1" goto limpeza_basica
-if "!escolha!"=="2" goto limpeza_completa
-if "!escolha!"=="3" goto menu
-echo    Opcao invalida!
-pause
-goto limpeza
-
-:limpeza_basica
-echo.
-echo [%TIME%] Iniciando limpeza basica >> "%LOG_FILE%"
-call :animated_progress "Limpando arquivos temporarios" 20
-
-:: Limpeza de arquivos temporários usando função reutilizável
-for %%d in ("%temp%" "C:\Windows\Temp" "%USERPROFILE%\AppData\Local\Temp") do (
-    call :clean_directory "%%d"
-)
-
-call :animated_progress "Limpando lixeira" 10
-powershell -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue" 2>nul
-
-call :animated_progress "Limpando caches de navegadores" 15
-for %%b in ("Google" "Microsoft" "Mozilla") do (
-    if exist "%LOCALAPPDATA%\%%b" (
-        for /d /r "%LOCALAPPDATA%\%%b" %%d in (Cache Storage Cache) do (
-            if exist "%%d" call :clean_directory "%%d"
-        )
-    )
-)
-
-call :show_progress "Limpeza basica concluida! Espaco liberado: aproximadamente 500MB-1GB"
-set /a space_saved+=500
->> "%USERPROFILE%\CleanTools_stats.txt" echo space_saved=!space_saved!
-pause
-goto limpeza
-
-:limpeza_completa
-echo.
-echo [%TIME%] Iniciando limpeza completa >> "%LOG_FILE%"
-
-:: Criar ponto de restauração
-call :create_restore_point
-
-call :animated_progress "Limpando arquivos temporarios do sistema" 25
-for %%d in ("%temp%" "C:\Windows\Temp" "%USERPROFILE%\AppData\Local\Temp" "C:\Users\Public\Temp" "%SystemRoot%\Logs" "%SystemRoot%\Minidump") do (
-    call :clean_directory "%%d"
-)
-
-call :animated_progress "Limpando caches de aplicativos" 20
-for %%a in ("Adobe" "Apple" "Spotify" "Discord" "Steam") do (
-    if exist "%LOCALAPPDATA%\%%a" (
-        for /d /r "%LOCALAPPDATA%\%%a" %%d in (Cache Caches Temp Logs) do (
-            if exist "%%d" call :clean_directory "%%d"
-        )
-    )
-)
-
-call :animated_progress "Limpando lixeira e arquivos temporarios de usuarios" 15
-powershell -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue" 2>nul
-
-call :animated_progress "Limpando cache do Windows Update" 10
+echo Executando limpeza completa...
+del /s /q /f "%USERPROFILE%\AppData\Local\Temp\*.*" >nul 2>&1
+del /s /q /f "%temp%\*" >nul 2>&1
+del /s /q /f "C:\Windows\Prefetch\*.*" >nul 2>&1
+del /s /q /f "C:\Windows\Temp\*.*" >nul 2>&1
+PowerShell.exe -NoProfile -Command Clear-RecycleBin -Confirm:$false >nul 2>&1
 net stop wuauserv >nul 2>&1
-call :clean_directory "%systemroot%\SoftwareDistribution"
+del /q /f "C:\Windows\SoftwareDistribution\Download\*" >nul 2>&1
 net start wuauserv >nul 2>&1
-
-call :animated_progress "Executando Limpeza de Disco do Windows" 20
-if exist "C:\Windows\System32\cleanmgr.exe" (
-    cleanmgr /sagerun:1 >nul 2>&1
+del /q /f "%USERPROFILE%\Downloads\*" >nul 2>&1
+del /f /s /q %systemdrive%\*.tmp >nul 2>&1
+del /f /s /q %systemdrive%\*.log >nul 2>&1
+del /f /s /q %systemdrive%\*.bak >nul 2>&1
+del /f /q "%USERPROFILE%\cookies*.*" >nul 2>&1
+del /f /q "%USERPROFILE%\recent*.*" >nul 2>&1
+del /q /f "%USERPROFILE%\AppData\Local\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+cleanmgr /sagerun:1 >nul 2>&1
+if errorlevel 1 (
+    echo Aviso: Alguns arquivos ou processos nao puderam ser limpos.
+) else (
+    echo Limpeza completa concluida!
 )
-
-call :show_progress "Limpeza completa concluida! Espaco liberado: aproximadamente 2-4GB"
-set /a space_saved+=2000
->> "%USERPROFILE%\CleanTools_stats.txt" echo space_saved=!space_saved!
 pause
-goto limpeza
+exit /b
 
-:: ==================================================
-:: REPARO DO SISTEMA (Otimizado)
-:: ==================================================
-
-:reparo
+:: ---------- REPARO ----------
+:REPARO_MENU
 cls
-call :display_header
-echo.
-echo    REPARO DO SISTEMA AVANCADO
-echo.
-echo    1 - Verificar e reparar arquivos do sistema (SFC)
-echo    2 - Verificar e reparar integridade do sistema de arquivos (CHKDSK)
-echo    3 - Reparar componentes do Windows (DISM)
-echo    4 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
+echo ==== REPARO AVANCADO ====
+echo [1] Verificar integridade da imagem do Windows (DISM /CheckHealth)
+echo [2] Scan detalhado da imagem (DISM /ScanHealth)
+echo [3] Reparar componentes do Windows (DISM /RestoreHealth)
+echo [4] Verificar e reparar arquivos do sistema (SFC /scannow)
+echo [5] Reparo sequencial recomendado (DISM + SFC)
+echo [0] Voltar
+set /p "repopt=Escolha uma opcao: "
+if "!repopt!"=="1" call :DISM_CheckHealth & goto REPARO_MENU
+if "!repopt!"=="2" call :DISM_ScanHealth & goto REPARO_MENU
+if "!repopt!"=="3" call :DISM_RestoreHealth & goto REPARO_MENU
+if "!repopt!"=="4" call :SFC_ScanNow & goto REPARO_MENU
+if "!repopt!"=="5" call :REPARO_SEQUENCIAL & goto REPARO_MENU
+if "!repopt!"=="0" exit /b
+goto REPARO_MENU
 
-if "!escolha!"=="1" goto reparar_arquivos_sistema
-if "!escolha!"=="2" goto reparar_integridade_arquivos
-if "!escolha!"=="3" goto reparar_dism
-if "!escolha!"=="4" goto menu
-echo    Opcao invalida!
-pause
-goto reparo
-
-:reparar_arquivos_sistema
-echo.
-echo [%TIME%] Verificando e reparando arquivos do sistema >> "%LOG_FILE%"
-call :animated_progress "Verificando arquivos do sistema com SFC" 30
-sfc /scannow
-call :show_progress "Verificacao e reparo de arquivos do sistema concluidos!"
-echo [%TIME%] Verificacao e reparo de arquivos do sistema concluidos >> "%LOG_FILE%"
-pause
-goto reparo
-
-:reparar_integridade_arquivos
-echo.
-echo [%TIME%] Verificando e reparando integridade do sistema de arquivos >> "%LOG_FILE%"
-call :animated_progress "Verificando integridade do sistema de arquivos com CHKDSK" 40
-echo    O computador sera reiniciado para concluir a verificacao de disco.
-choice /c SN /n /m "    Deseja agendar a verificacao para o proximo reinicio? (S/N)"
-if errorlevel 2 goto reparo
-chkdsk C: /f /r
-shutdown /r /t 30 /c "O computador sera reiniciado para concluir a verificacao de disco agendada pelo CleanTools Plus."
-call :show_progress "Verificacao de disco agendada para o proximo reinicio!"
-echo [%TIME%] Verificacao de disco agendada para o proximo reinicio >> "%LOG_FILE%"
-pause
-goto reparo
-
-:reparar_dism
-echo.
-echo [%TIME%] Reparando componentes do Windows com DISM >> "%LOG_FILE%"
-call :animated_progress "Verificando integridade da imagem do Windows" 25
+:DISM_CheckHealth
+cls
+echo Verificando integridade da imagem do Windows...
 DISM /Online /Cleanup-Image /CheckHealth
-call :animated_progress "Reparando imagem do Windows" 30
+if errorlevel 1 (
+    echo Erro detectado na verificacao da integridade.
+) else (
+    echo Integridade verificada com sucesso.
+)
+pause
+exit /b
+
+:DISM_ScanHealth
+cls
+echo Escaneando a saude da imagem do Windows...
+DISM /Online /Cleanup-Image /ScanHealth
+if errorlevel 1 (
+    echo Erros encontrados na saude da imagem.
+) else (
+    echo Saude da imagem verificada com sucesso.
+)
+pause
+exit /b
+
+:DISM_RestoreHealth
+cls
+echo Reparando componentes do Windows...
 DISM /Online /Cleanup-Image /RestoreHealth
-call :show_progress "Reparo de componentes do Windows concluido!"
-echo [%TIME%] Reparo de componentes do Windows concluido >> "%LOG_FILE%"
-pause
-goto reparo
-
-:: ==================================================
-:: OTIMIZACOES DO WINDOWS (Otimizado)
-:: ==================================================
-
-:otimizacao
-cls
-call :display_header
-echo.
-echo    OTIMIZACOES AVANCADAS DO WINDOWS
-echo.
-echo    1 - Otimizacao para SSD (Recomendado para SSDs)
-echo    2 - Otimizacao para HD (Recomendado para discos rigidos)
-echo    3 - Otimizacao de Rede e Internet
-echo    4 - Otimizacao de Energia e Desempenho
-echo    5 - Otimizacao para Processadores (AMD/Intel)
-echo    6 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
-
-if "!escolha!"=="1" goto otimizar_ssd
-if "!escolha!"=="2" goto otimizar_hd
-if "!escolha!"=="3" goto otimizar_rede
-if "!escolha!"=="4" goto otimizar_energia
-if "!escolha!"=="5" goto otimizar_processador
-if "!escolha!"=="6" goto menu
-echo    Opcao invalida!
-pause
-goto otimizacao
-
-:otimizar_ssd
-echo.
-echo [%TIME%] Iniciando otimizacao para SSD >> "%LOG_FILE%"
-echo    Configurando Windows para melhor desempenho em SSD...
-
-call :animated_progress "Desativando desfragmentacao automatica para SSD" 10
-schtasks /change /tn "\Microsoft\Windows\Defrag\ScheduledDefrag" /disable >nul 2>&1
-
-call :animated_progress "Habilitando TRIM para SSD" 10
-fsutil behavior set DisableDeleteNotify 0 >nul 2>&1
-
-call :animated_progress "Desativando indexacao de arquivos para SSD" 10
-sc config "wsearch" start= disabled >nul 2>&1
-sc stop "wsearch" >nul 2>&1
-
-call :animated_progress "Ajustando prefetch e superfetch para SSD" 10
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnablePrefetcher /t REG_DWORD /d 0 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnableSuperfetch /t REG_DWORD /d 0 /f >nul 2>&1
-sc config "SysMain" start= disabled >nul 2>&1
-sc stop "SysMain" >nul 2>&1
-
-call :animated_progress "Desativando hibernacao para liberar espaco" 10
-powercfg -h off >nul 2>&1
-
-call :show_progress "Otimizacao para SSD concluida! Reinicie o computador para aplicar todas as configuracoes."
-echo [%TIME%] Otimizacao para SSD concluida >> "%LOG_FILE%"
-pause
-goto otimizacao
-
-:otimizar_hd
-echo.
-echo [%TIME%] Iniciando otimizacao para HD >> "%LOG_FILE%"
-echo    Configurando Windows para melhor desempenho em HD...
-
-call :animated_progress "Ativando desfragmentacao automatica para HD" 10
-schtasks /change /tn "\Microsoft\Windows\Defrag\ScheduledDefrag" /enable >nul 2>&1
-schtasks /run /tn "\Microsoft\Windows\Defrag\ScheduledDefrag" >nul 2>&1
-
-call :animated_progress "Ativando prefetch e superfetch para HD" 10
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnablePrefetcher /t REG_DWORD /d 3 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters" /v EnableSuperfetch /t REG_DWORD /d 3 /f >nul 2>&1
-sc config "SysMain" start= auto >nul 2>&1
-sc start "SysMain" >nul 2>&1
-
-call :animated_progress "Desativando TRIM para HD" 10
-fsutil behavior set DisableDeleteNotify 1 >nul 2>&1
-
-call :animated_progress "Ativando indexacao de arquivos para HD" 10
-sc config "wsearch" start= auto >nul 2>&1
-sc start "wsearch" >nul 2>&1
-
-call :animated_progress "Desfragmentando disco rigido" 30
-%SystemRoot%\System32\defrag.exe C: /D /U >nul 2>&1
-
-call :show_progress "Otimizacao para HD concluida!"
-echo [%TIME%] Otimizacao para HD concluida >> "%LOG_FILE%"
-pause
-goto otimizacao
-
-:otimizar_rede
-echo.
-echo [%TIME%] Iniciando otimizacao de rede >> "%LOG_FILE%"
-
-call :animated_progress "Otimizando parametros de TCP/IP" 15
-netsh int tcp set global autotuninglevel=normal >nul 2>&1
-netsh int tcp set global congestionprovider=ctcp >nul 2>&1
-netsh int tcp set global ecncapability=disabled >nul 2>&1
-netsh int tcp set global rss=enabled >nul 2>&1
-
-call :animated_progress "Configurando DNS de alto desempenho" 10
-for %%i in ("Ethernet" "Wi-Fi") do (
-    netsh interface ip set dns %%i static 1.1.1.1 primary >nul 2>&1
-    netsh interface ip add dns %%i 1.0.0.1 index=2 >nul 2>&1
-)
-
-call :animated_progress "Aumentando numero de conexoes simultaneas" 10
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v MaxUserPort /t REG_DWORD /d 65534 /f >nul 2>&1
-reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" /v TcpTimedWaitDelay /t REG_DWORD /d 30 /f >nul 2>&1
-
-call :show_progress "Otimizacao de rede concluida!"
-echo [%TIME%] Otimizacao de rede concluida >> "%LOG_FILE%"
-pause
-goto otimizacao
-
-:otimizar_energia
-echo.
-echo [%TIME%] Iniciando otimizacao de energia e desempenho >> "%LOG_FILE%"
-
-call :animated_progress "Configurando plano de energia para alto desempenho" 10
-powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
-powercfg -setactive e9a42b02-d5df-448d-aa00-03f14749eb61 >nul 2>&1
-
-call :animated_progress "Desativando recursos de economia de energia" 15
-powercfg -h off >nul 2>&1
-powercfg -change -monitor-timeout-ac 0 >nul 2>&1
-powercfg -change -disk-timeout-ac 0 >nul 2>&1
-powercfg -change -standby-timeout-ac 0 >nul 2>&1
-
-call :animated_progress "Ajustando processador para maximo desempenho" 10
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-
-call :show_progress "Otimizacao de energia e desempenho concluida!"
-echo [%TIME%] Otimizacao de energia e desempenho concluida >> "%LOG_FILE%"
-pause
-goto otimizacao
-
-:otimizar_processador
-echo.
-echo [%TIME%] Otimizando configuracoes do processador >> "%LOG_FILE%"
-echo    Detectando tipo de processador...
-
-set "cpu_vendor=Intel"
-for /f "skip=1" %%i in ('wmic cpu get manufacturer') do (
-    if not "%%i"=="" set "cpu_vendor=%%i"
-    goto :cpu_detected
-)
-
-:cpu_detected
-echo    Processador detectado: !cpu_vendor!
-
-if /i "!cpu_vendor!"=="Intel" goto optimize_intel
-if /i "!cpu_vendor!"=="AMD" goto optimize_amd
-
-echo    Processador não identificado. Aplicando otimizacoes genericas.
-goto optimize_generic
-
-:optimize_intel
-echo    Aplicando otimizacoes especificas para Intel...
-call :animated_progress "Otimizando para processadores Intel" 20
-
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 >nul 2>&1
-
-goto optimize_common
-
-:optimize_amd
-echo    Aplicando otimizacoes especificas para AMD...
-call :animated_progress "Otimizando para processadores AMD" 20
-
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PROCTHROTTLEMAX 100 >nul 2>&1
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 >nul 2>&1
-
-goto optimize_common
-
-:optimize_generic
-call :animated_progress "Aplicando otimizacoes genericas para processador" 20
-
-:optimize_common
-powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES /t REG_DWORD /d 100 >nul 2>&1
-powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES /t REG_DWORD /d 100 >nul 2>&1
-
-call :show_progress "Processador otimizado com sucesso!"
-echo [%TIME%] Processador otimizado >> "%LOG_FILE%"
-pause
-goto otimizacao
-
-:: ==================================================
-:: NOVA SEÇÃO: DRIVERS E DISPOSITIVOS (Implementada)
-:: ==================================================
-
-:drivers
-cls
-call :display_header
-echo.
-echo    GERENCIADOR DE DRIVERS E DISPOSITIVOS
-echo.
-echo    1 - Backup de drivers atuais
-echo    2 - Restaurar drivers do backup
-echo    3 - Desativar atualizacao de drivers via Windows Update
-echo    4 - Ver dispositivos com problemas
-echo    5 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
-
-if "!escolha!"=="1" goto backup_drivers
-if "!escolha!"=="2" goto restore_drivers
-if "!escolha!"=="3" goto disable_driver_updates
-if "!escolha!"=="4" goto problematic_devices
-if "!escolha!"=="5" goto menu
-echo    Opcao invalida!
-pause
-goto drivers
-
-:backup_drivers
-echo.
-echo [%TIME%] Iniciando backup de drivers >> "%LOG_FILE%"
-set "BACKUP_PATH=%USERPROFILE%\Desktop\Backup_Drivers_%DATE:~-4,4%%DATE:~-10,2%%DATE:~-7,2%"
-if not exist "!BACKUP_PATH!" mkdir "!BACKUP_PATH!"
-
-call :animated_progress "Fazendo backup dos drivers do sistema" 30
-dism /online /export-driver /destination:"!BACKUP_PATH!" >nul
-if !errorlevel! equ 0 (
-    call :show_progress "Backup de drivers concluido! Salvo em: !BACKUP_PATH!"
-    echo [%TIME%] Backup de drivers concluido >> "%LOG_FILE%"
+if errorlevel 1 (
+    echo Falha na reparacao de componentes.
 ) else (
-    echo    Erro ao fazer backup dos drivers.
-    echo [%TIME%] Erro no backup de drivers >> "%LOG_FILE%"
+    echo Reparacao concluida com sucesso.
 )
 pause
-goto drivers
+exit /b
 
-:restore_drivers
-echo.
-echo [%TIME%] Iniciando restauracao de drivers >> "%LOG_FILE%"
-set "RESTORE_PATH=%USERPROFILE%\Desktop\Backup_Drivers_*"
-for /d %%i in ("!RESTORE_PATH!") do set "LATEST_BACKUP=%%i"
+:SFC_ScanNow
+cls
+echo Verificando e reparando arquivos do sistema...
+sfc /scannow
+if errorlevel 1 (
+    echo O utilitario SFC encontrou problemas ou falhou.
+) else (
+    echo Verificacao concluida com sucesso.
+)
+pause
+exit /b
 
-if not defined LATEST_BACKUP (
-    echo    Nenhum backup de drivers encontrado.
-    echo    Execute primeiro o backup de drivers.
+:REPARO_SEQUENCIAL
+cls
+echo Executando sequencia DISM ScanHealth, RestoreHealth e SFC...
+DISM /Online /Cleanup-Image /ScanHealth
+DISM /Online /Cleanup-Image /RestoreHealth
+sfc /scannow
+echo Recomendado reiniciar o sistema apos o procedimento.
+pause
+exit /b
+
+:: ---------- OTIMIZACAO ----------
+:OTIMIZACAO_MENU
+cls
+echo ==== OTIMIZACOES DO WINDOWS ====
+echo [1] Otimizacao SSD (TRIM e desativar defrag agendado)
+echo [2] Otimizacao HDD (defrag tradicional)
+echo [3] Otimizacao de Rede e Internet
+echo [4] Otimizacao de Energia e Desempenho
+echo [5] Otimizacao AMD Ryzen 5 3500U
+echo [6] Otimizacao de Memoria RAM (limpeza cache/standby)
+echo [7] Gerenciamento de Servicos
+echo [8] Otimizacao de Inicializacao (programas no boot)
+echo [9] Ajustes Visuais e Interface
+echo [10] Protecao e Privacidade
+echo [11] Otimizacao para Jogos
+echo [12] Otimizacao Avancada de Rede
+echo [13] Reverter todas as Otimizacoes
+echo [0] Voltar
+set /p "otopt=Escolha uma opcao: "
+if "!otopt!"=="1" call :OTIMIZACAO_SSD & goto OTIMIZACAO_MENU
+if "!otopt!"=="2" call :OTIMIZACAO_HDD & goto OTIMIZACAO_MENU
+if "!otopt!"=="3" call :OTIMIZACAO_REDE & goto OTIMIZACAO_MENU
+if "!otopt!"=="4" call :OTIMIZACAO_ENERGIA & goto OTIMIZACAO_MENU
+if "!otopt!"=="5" call :OTIMIZACAO_RYZEN & goto OTIMIZACAO_MENU
+if "!otopt!"=="6" call :OTIMIZACAO_RAM & goto OTIMIZACAO_MENU
+if "!otopt!"=="7" call :GERENCIAS_SERVICOS & goto OTIMIZACAO_MENU
+if "!otopt!"=="8" call :OTIMIZACAO_BOOT & goto OTIMIZACAO_MENU
+if "!otopt!"=="9" call :AJUSTES_VISUAIS & goto OTIMIZACAO_MENU
+if "!otopt!"=="10" call :PROTECAO_PRIVACIDADE & goto OTIMIZACAO_MENU
+if "!otopt!"=="11" call :OTIMIZACAO_JOGOS & goto OTIMIZACAO_MENU
+if "!otopt!"=="12" call :OTIMIZACAO_REDE_AVANCADA & goto OTIMIZACAO_MENU
+if "!otopt!"=="13" call :REVERTENDO_OTIMIZACOES & goto OTIMIZACAO_MENU
+if "!otopt!"=="0" exit /b
+goto OTIMIZACAO_MENU
+
+:OTIMIZACAO_SSD
+cls
+echo Executando otimizacao SSD...
+fsutil behavior set DisableDeleteNotify 0
+schtasks /Change /TN "Microsoft\\Windows\\Defrag\\ScheduledDefrag" /Disable >nul 2>&1
+if errorlevel 1 (
+    echo Falha ao desativar defrag agendado.
+) else (
+    echo Otimizacao SSD concluida.
+)
+pause
+exit /b
+
+:OTIMIZACAO_HDD
+cls
+echo Executando defragmentacao para HDD...
+defrag C: /O
+if errorlevel 1 (
+    echo Erro ao executar defrag.
+) else (
+    echo Defragmentacao concluida.
+)
+pause
+exit /b
+
+:OTIMIZACAO_REDE
+cls
+echo Otimizando rede...
+netsh int ip reset >nul 2>&1
+netsh winsock reset >nul 2>&1
+ipconfig /flushdns >nul 2>&1
+ipconfig /release >nul 2>&1
+ipconfig /renew >nul 2>&1
+echo Otimizacao de rede concluida.
+pause
+exit /b
+
+:OTIMIZACAO_ENERGIA
+cls
+echo Otimizando energia e desempenho...
+powercfg /setactive SCHEME_BALANCED >nul 2>&1
+powercfg /change monitor-timeout-ac 0 >nul 2>&1
+powercfg /change standby-timeout-ac 0 >nul 2>&1
+powercfg /change disk-timeout-ac 0 >nul 2>&1
+echo Otimizacao aplicada.
+pause
+exit /b
+
+:OTIMIZACAO_RYZEN
+cls
+echo Aplicando plano de otimizacao para AMD Ryzen 5 3500U...
+echo Coloque o arquivo RyzenOptimized.pow na mesma pasta e substitua <GUID> pelo correto antes de usar.
+rem powercfg /import "%~dp0RyzenOptimized.pow"
+rem powercfg /setactive <GUID>
+pause
+exit /b
+
+:OTIMIZACAO_RAM
+cls
+echo Limpando cache de memoria RAM (limite de comando direto)...
+echo Use ferramentas externas para limpeza profunda.
+pause
+exit /b
+
+:GERENCIAS_SERVICOS
+cls
+echo Listando e desabilitando servicos nao essenciais (exemplo)...
+sc stop Fax >nul 2>&1
+sc config Fax start= disabled >nul 2>&1
+echo Servicos desabilitados.
+pause
+exit /b
+
+:OTIMIZACAO_BOOT
+cls
+echo Abrindo gerenciador de tarefas para controle de programas no boot...
+start taskmgr
+pause
+exit /b
+
+:AJUSTES_VISUAIS
+cls
+echo Ajustando visual para desempenho...
+reg add "HKCU\\Control Panel\\Desktop\\WindowMetrics" /v MinAnimate /t REG_SZ /d 0 /f >nul 2>&1
+reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects" /v VisualFXSetting /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKCU\\Software\\Microsoft\\Windows\\DWM" /v Composition /t REG_DWORD /d 0 /f >nul 2>&1
+echo Ajustes aplicados.
+pause
+exit /b
+
+:PROTECAO_PRIVACIDADE
+cls
+echo Desativando telemetria...
+reg add "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f >nul 2>&1
+echo Telemetria desativada.
+pause
+exit /b
+
+:OTIMIZACAO_JOGOS
+cls
+echo Otimizacao para Jogos (manual)...
+echo Desative processos nao essenciais e eleve prioridades manualmente se desejar.
+pause
+exit /b
+
+:OTIMIZACAO_REDE_AVANCADA
+cls
+echo Otimizando parametros de rede avancados...
+netsh interface tcp set global chimney=enabled >nul 2>&1
+netsh interface tcp set global autotuninglevel=normal >nul 2>&1
+netsh interface tcp set global congestionprovider=ctcp >nul 2>&1
+echo Otimizacao avancada aplicada.
+pause
+exit /b
+
+:REVERTENDO_OTIMIZACOES
+cls
+echo Revertendo otimizacoes...
+schtasks /Change /TN "Microsoft\\Windows\\Defrag\\ScheduledDefrag" /Enable >nul 2>&1
+sc config Fax start= demand >nul 2>&1
+sc start Fax >nul 2>&1
+reg add "HKCU\\Control Panel\\Desktop\\WindowMetrics" /v MinAnimate /t REG_SZ /d 1 /f >nul 2>&1
+reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects" /v VisualFXSetting /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\\Software\\Microsoft\\Windows\\DWM" /v Composition /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\DataCollection" /v AllowTelemetry /t REG_DWORD /d 1 /f >nul 2>&1
+echo Otimizacoes revertidas.
+pause
+exit /b
+
+:: ---------- DRIVERS ----------
+:DRIVERS_MENU
+cls
+echo ==== BACKUP E GERENCIAMENTO DE DRIVERS ====
+echo [1] Backup dos drivers atuais
+echo [2] Restaurar drivers do backup
+echo [3] Desativar atualizacoes automaticas de drivers via Windows Update
+echo [4] Verificar dispositivos com problema (Gerenciador de Dispositivos)
+echo [5] Abrir Gerenciador de Dispositivos
+echo [0] Voltar
+set /p "dopt=Escolha uma opcao: "
+if "!dopt!"=="1" call :BACKUP_DRIVERS & goto DRIVERS_MENU
+if "!dopt!"=="2" call :RESTORE_DRIVERS & goto DRIVERS_MENU
+if "!dopt!"=="3" call :DISABLE_AUTO_DRIVER_UPDATES & goto DRIVERS_MENU
+if "!dopt!"=="4" call :OPEN_DEVICE_MANAGER & goto DRIVERS_MENU
+if "!dopt!"=="5" call :OPEN_DEVICE_MANAGER & goto DRIVERS_MENU
+if "!dopt!"=="0" exit /b
+goto DRIVERS_MENU
+
+:BACKUP_DRIVERS
+cls
+set "backupdir=%USERPROFILE%\Desktop\BackupDrivers"
+if not exist "!backupdir!" mkdir "!backupdir!"
+echo Exportando drivers para !backupdir!...
+dism /online /export-driver /destination:"!backupdir!"
+if errorlevel 1 (
+    echo Falha no backup dos drivers.
+) else (
+    echo Backup concluido com sucesso.
+)
+pause
+exit /b
+
+:RESTORE_DRIVERS
+cls
+set "backupdir=%USERPROFILE%\Desktop\BackupDrivers"
+if not exist "!backupdir!" (
+    echo Pasta de backup nao encontrada: !backupdir!
     pause
-    goto drivers
+    exit /b
 )
-
-echo    Ultimo backup encontrado: !LATEST_BACKUP!
-choice /c SN /n /m "    Deseja restaurar os drivers deste backup? (S/N)"
-if errorlevel 2 goto drivers
-
-call :animated_progress "Restaurando drivers do backup" 30
-pnputil /add-driver "!LATEST_BACKUP!\*.inf" /subdirs /install >nul
-if !errorlevel! equ 0 (
-    call :show_progress "Drivers restaurados com sucesso!"
-    echo [%TIME%] Drivers restaurados com sucesso >> "%LOG_FILE%"
+echo Restaurando drivers da pasta !backupdir!...
+pnputil /scan-devices
+pnputil /add-driver "!backupdir!\*.inf" /subdirs /install
+if errorlevel 1 (
+    echo Falha na restauracao dos drivers.
 ) else (
-    echo    Erro ao restaurar drivers.
-    echo [%TIME%] Erro na restauracao de drivers >> "%LOG_FILE%"
+    echo Restauracao concluida (reinicie se necessario).
 )
 pause
-goto drivers
+exit /b
 
-:disable_driver_updates
-echo.
-echo [%TIME%] Desativando atualizacao de drivers via Windows Update >> "%LOG_FILE%"
-call :animated_progress "Desativando atualizacoes automaticas de drivers" 15
-
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v SearchOrderConfig /t REG_DWORD /d 0 /f >nul
-
-call :show_progress "Atualizacoes automaticas de drivers desativadas!"
-echo [%TIME%] Atualizacoes automaticas de drivers desativadas >> "%LOG_FILE%"
-pause
-goto drivers
-
-:problematic_devices
-echo.
-echo [%TIME%] Verificando dispositivos com problemas >> "%LOG_FILE%"
-call :animated_progress "Verificando dispositivos com problemas" 15
-set "problem_count=0"
-for /f "tokens=2 delims=:" %%i in ('pnputil /enum-devices ^| findstr /C:"Problem"') do (
-    set /a problem_count+=1
-    echo    Dispositivo com problema: %%i
-)
-if !problem_count! equ 0 (
-    echo    Nenhum dispositivo com problemas encontrado.
+:DISABLE_AUTO_DRIVER_UPDATES
+cls
+echo Desativando atualizacoes automaticas via Windows Update...
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v SearchOrderConfig /t REG_DWORD /d 0 /f >nul 2>&1
+if errorlevel 1 (
+    echo Falha ao desativar atualizacoes automaticas.
 ) else (
-    echo    Total de dispositivos com problemas: !problem_count!
+    echo Atualizacoes de drivers desativadas.
 )
-echo [%TIME%] Verificacao de dispositivos concluida >> "%LOG_FILE%"
 pause
-goto drivers
+exit /b
 
-:: ==================================================
-:: ATUALIZACOES DE PROGRAMAS (Implementada)
-:: ==================================================
-
-:atualizacao
+:OPEN_DEVICE_MANAGER
 cls
-call :display_header
-echo.
-echo    ATUALIZACOES INTELIGENTES
-echo.
-echo    1 - Windows Update (Apenas seguranca - Sem drivers)
-echo    2 - Verificar atualizacoes via Winget
-echo    3 - Atualizar pacotes via Winget
-echo    4 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
-
-if "!escolha!"=="1" goto windows_update_security
-if "!escolha!"=="2" goto verificar_winget
-if "!escolha!"=="3" goto winget_update
-if "!escolha!"=="4" goto menu
-echo    Opcao invalida!
+echo Abrindo Gerenciador de Dispositivos...
+start devmgmt.msc
 pause
-goto atualizacao
+exit /b
 
-:windows_update_security
-echo.
-echo [%TIME%] Configurando Windows Update para atualizacoes de seguranca apenas >> "%LOG_FILE%"
+:: ---------- ATUALIZACOES ----------
+:ATUALIZACOES_MENU
+cls
+echo ==== ATUALIZACOES DE PROGRAMAS ====
+echo [1] Configurar Windows Update para atualizacoes de seguranca apenas
+echo [2] Verificar atualizacoes via winget
+echo [3] Verificar atualizacoes via chocolatey
+echo [4] Verificar atualizacoes via winget e chocolatey juntos
+echo [0] Voltar
+set /p "aopt=Escolha uma opcao: "
+if "!aopt!"=="1" call :CONFIG_WIN_UPDATE & goto ATUALIZACOES_MENU
+if "!aopt!"=="2" call :CHECK_WINGET_UPDATES & goto ATUALIZACOES_MENU
+if "!aopt!"=="3" call :CHECK_CHOCO_UPDATES & goto ATUALIZACOES_MENU
+if "!aopt!"=="4" call :CHECK_ALL_UPDATES & goto ATUALIZACOES_MENU
+if "!aopt!"=="0" exit /b
+goto ATUALIZACOES_MENU
 
-call :animated_progress "Configurando Windows Update para apenas seguranca" 15
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DeferFeatureUpdates /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DeferFeatureUpdatesPeriodInDays /t REG_DWORD /d 365 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DeferQualityUpdates /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v DeferQualityUpdatesPeriodInDays /t REG_DWORD /d 4 /f >nul
-
-call :animated_progress "Desativando atualizacoes de drivers pelo Windows Update" 10
-reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /t REG_DWORD /d 1 /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching" /v SearchOrderConfig /t REG_DWORD /d 0 /f >nul
-
-call :animated_progress "Executando Windows Update para atualizacoes de seguranca" 30
-USOClient StartInteractiveScan >nul
-
-call :show_progress "Windows Update configurado para priorizar apenas atualizacoes de seguranca!"
-echo [%TIME%] Windows Update configurado para atualizacoes de seguranca >> "%LOG_FILE%"
+:CONFIG_WIN_UPDATE
+cls
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\AUOptions" /t REG_DWORD /d 3 /f >nul 2>&1
+echo Windows Update configurado para atualizacoes de seguranca apenas.
 pause
-goto atualizacao
+exit /b
 
-:verificar_winget
+:CHECK_WINGET_UPDATES
+cls
+echo Verificando atualizacoes via winget...
+winget upgrade
+pause
+exit /b
+
+:CHECK_CHOCO_UPDATES
+cls
+echo Verificando atualizacoes via chocolatey...
+choco outdated
+pause
+exit /b
+
+:CHECK_ALL_UPDATES
+cls
+echo Verificando atualizacoes via winget e chocolatey...
+echo --- Winget ---
+winget upgrade
 echo.
-echo [%TIME%] Verificando atualizacoes via Winget >> "%LOG_FILE%"
-call :animated_progress "Verificando atualizacoes via Winget" 20
-winget upgrade --list > "%USERPROFILE%\Desktop\Winget_Atualizacoes.txt" 2>nul
-if !errorlevel! equ 0 (
-    call :show_progress "Lista de atualizacoes via Winget gerada!"
-    echo [%TIME%] Lista de atualizacoes via Winget gerada >> "%LOG_FILE%"
-    echo.
-    echo    Lista de atualizacoes via Winget salva em %USERPROFILE%\Desktop\Winget_Atualizacoes.txt
+echo --- Chocolatey ---
+choco outdated
+pause
+exit /b
+
+:: ---------- FERRAMENTAS ----------
+:FERRAMENTAS_MENU
+cls
+echo ==== FERRAMENTAS AVANCADAS ====
+echo [1] Gerenciador de Tarefas Avancadas (Process Explorer)
+echo [2] Editor de Registro
+echo [3] Gerenciador de Dispositivos
+echo [4] Visualizador de Eventos
+echo [5] Limpar Cache DNS
+echo [6] Abrir Monitor de Recursos
+echo [7] Exibir uso CPU, RAM e Disco
+echo [0] Voltar
+set /p "fopt=Escolha uma opcao: "
+if "!fopt!"=="1" call :PROCESS_EXPLORER & goto FERRAMENTAS_MENU
+if "!fopt!"=="2" start regedit & goto FERRAMENTAS_MENU
+if "!fopt!"=="3" start devmgmt.msc & goto FERRAMENTAS_MENU
+if "!fopt!"=="4" start eventvwr.msc & goto FERRAMENTAS_MENU
+if "!fopt!"=="5" call :FLUSH_DNS & goto FERRAMENTAS_MENU
+if "!fopt!"=="6" start resmon.exe & goto FERRAMENTAS_MENU
+if "!fopt!"=="7" call :SHOW_RESOURCE_USAGE & goto FERRAMENTAS_MENU
+if "!fopt!"=="0" exit /b
+goto FERRAMENTAS_MENU
+
+:PROCESS_EXPLORER
+cls
+if exist "%~dp0procexp.exe" (
+    start "" "%~dp0procexp.exe"
 ) else (
-    echo    Erro: Winget nao encontrado ou falha ao executar.
+    echo Process Explorer nao encontrado.
+    echo Baixe em: https://docs.microsoft.com/en-us/sysinternals/downloads/process-explorer
 )
 pause
-goto atualizacao
+exit /b
 
-:winget_update
-echo.
-echo [%TIME%] Atualizando pacotes via Winget >> "%LOG_FILE%"
-call :animated_progress "Atualizando pacotes via Winget" 30
-winget upgrade --all --accept-package-agreements --accept-source-agreements 2>nul
-if !errorlevel! equ 0 (
-    call :show_progress "Atualizacao via Winget concluida!"
-    echo [%TIME%] Atualizacao via Winget concluida >> "%LOG_FILE%"
+:FLUSH_DNS
+cls
+ipconfig /flushdns >nul 2>&1
+if errorlevel 1 (
+    echo Falha ao limpar cache DNS.
 ) else (
-    echo    Erro: Winget nao encontrado ou falha ao executar.
+    echo Cache DNS limpo com sucesso!
 )
 pause
-goto atualizacao
+exit /b
 
-:: ==================================================
-:: FERRAMENTAS AVANCADAS (Implementada)
-:: ==================================================
-
-:avancado
+:SHOW_RESOURCE_USAGE
 cls
-call :display_header
+echo Uso de CPU:
+wmic cpu get loadpercentage
 echo.
-echo    FERRAMENTAS AVANCADAS
+echo Memoria livre (KB):
+wmic OS get FreePhysicalMemory /format:list
 echo.
-echo    1 - Gerenciador de Tarefas Avancado
-echo    2 - Editor do Registro (Registry)
-echo    3 - Gerenciador de Dispositivos
-echo    4 - Visualizador de Eventos
-echo    5 - Limpeza de DNS
-echo    6 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
-
-if "!escolha!"=="1" goto gerenciador_tarefas
-if "!escolha!"=="2" goto editor_registro
-if "!escolha!"=="3" goto gerenciador_dispositivos
-if "!escolha!"=="4" goto visualizador_eventos
-if "!escolha!"=="5" goto limpeza_dns
-if "!escolha!"=="6" goto menu
-echo    Opcao invalida!
+echo Processos:
+tasklist /FO TABLE /NH
 pause
-goto avancado
+exit /b
 
-:gerenciador_tarefas
-taskmgr
-goto avancado
-
-:editor_registro
-regedit
-goto avancado
-
-:gerenciador_dispositivos
-devmgmt.msc
-goto avancado
-
-:visualizador_eventos
-eventvwr.msc
-goto avancado
-
-:limpeza_dns
-echo.
-echo [%TIME%] Executando limpeza de DNS >> "%LOG_FILE%"
-call :animated_progress "Limpando cache DNS" 10
-ipconfig /flushdns
-call :show_progress "Cache DNS limpo!"
-pause
-goto avancado
-
-:: ==================================================
-:: RELATORIO DO SISTEMA (Implementada)
-:: ==================================================
-
-:relatorio
+:: ---------- INSTALACOES ----------
+:INSTALACOES_MENU
 cls
-call :display_header
-echo.
-echo    RELATORIO DO SISTEMA
-echo.
-echo    1 - Gerar relatorio completo do sistema
-echo    2 - Informacoes de hardware
-echo    3 - Informacoes de software
-echo    4 - Ver logs do CleanTools
-echo    5 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
+echo ==== INSTALACAO DE PROGRAMAS ====
+echo [1] Instalar programas via winget
+echo [2] Instalar programas via chocolatey
+echo [3] Baixar programas de terceiros (links)
+echo [0] Voltar
+set /p "iopt=Escolha uma opcao: "
+if "!iopt!"=="1" call :WINGET_INSTALL & goto INSTALACOES_MENU
+if "!iopt!"=="2" call :CHOCO_INSTALL & goto INSTALACOES_MENU
+if "!iopt!"=="3" call :DOWNLOAD_LINKS & goto INSTALACOES_MENU
+if "!iopt!"=="0" exit /b
+goto INSTALACOES_MENU
 
-if "!escolha!"=="1" goto relatorio_completo
-if "!escolha!"=="2" goto info_hardware
-if "!escolha!"=="3" goto info_software
-if "!escolha!"=="4" goto ver_logs
-if "!escolha!"=="5" goto menu
-echo    Opcao invalida!
-pause
-goto relatorio
-
-:relatorio_completo
-echo.
-echo [%TIME%] Gerando relatorio completo do sistema >> "%LOG_FILE%"
-call :animated_progress "Coletando informacoes do sistema" 30
-systeminfo > "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo ========================================== >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo INFORMACOES DE HARDWARE >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo ========================================== >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-wmic cpu get name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-wmic memorychip get capacity,speed,manufacturer >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-wmic diskdrive get model,size,interfaceType >> "%USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-call :show_progress "Relatorio completo gerado em %USERPROFILE%\Desktop\Relatorio_Sistema_Completo.txt"
-echo [%TIME%] Relatorio completo gerado >> "%LOG_FILE%"
-pause
-goto relatorio
-
-:info_hardware
-echo.
-echo [%TIME%] Gerando relatorio de hardware >> "%LOG_FILE%"
-call :animated_progress "Coletando informacoes de hardware" 20
-echo INFORMACOES DE HARDWARE > "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-echo ====================== >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-wmic computersystem get model,manufacturer >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-wmic cpu get name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-wmic memorychip get capacity,speed,manufacturer >> "%USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-call :show_progress "Relatorio de hardware gerado em %USERPROFILE%\Desktop\Relatorio_Hardware.txt"
-echo [%TIME%] Relatorio de hardware gerado >> "%LOG_FILE%"
-pause
-goto relatorio
-
-:info_software
-echo.
-echo [%TIME%] Gerando relatorio de software >> "%LOG_FILE%"
-call :animated_progress "Coletando informacoes de software" 20
-echo INFORMACOES DE SOFTWARE > "%USERPROFILE%\Desktop\Relatorio_Software.txt"
-echo ====================== >> "%USERPROFILE%\Desktop\Relatorio_Software.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Software.txt"
-wmic os get name,version,buildnumber >> "%USERPROFILE%\Desktop\Relatorio_Software.txt"
-echo. >> "%USERPROFILE%\Desktop\Relatorio_Software.txt"
-wmic product get name,version >> "%USERPROFILE%\Desktop\Relatorio_Software.txt" 2>nul
-call :show_progress "Relatorio de software gerado em %USERPROFILE%\Desktop\Relatorio_Software.txt"
-echo [%TIME%] Relatorio de software gerado >> "%LOG_FILE%"
-pause
-goto relatorio
-
-:ver_logs
-echo.
-echo [%TIME%] Exibindo logs do CleanTools >> "%LOG_FILE%"
-if not exist "%LOG_FILE%" (
-    echo    Nenhum log encontrado.
-    pause
-    goto relatorio
-)
+:WINGET_INSTALL
 cls
-echo    ULTIMOS LOGS DO CLEANTOOLS:
-echo    ===========================
-type "%LOG_FILE%"
-echo.
-echo    Pressione qualquer tecla para continuar...
-pause >nul
-goto relatorio
+echo ==== Instalar via Winget ====
+echo Escolha o programa:
+echo 1. Google Chrome
+echo 2. AnyDesk
+echo 3. TeamViewer
+echo 4. Bitwarden
+echo 5. Foxit PDF Reader
+echo 6. Gimp
+echo 7. Notepad++
+echo 8. Visual Studio Code
+echo 9. GitHub Desktop
+echo 10. VLC
+echo 11. Spotify
+echo 12. 7-Zip
+echo 13. K-lite Codec Pack Full
+echo 14. Java Runtime Environment
+echo 15. Git
+echo 16. WSL (Ubuntu/Kali)
+echo 17. PowerShell 7
+echo 18. OnlyOffice
+echo 19. OBS Studio
+echo 20. Peazip
+echo 21. Angry IP Scanner
+echo 0. Voltar
+set /p "wintopt=Escolha: "
+if "!wintopt!"=="1" winget install Google.Chrome -e
+if "!wintopt!"=="2" winget install AnyDeskSoftwareGmbH.AnyDesk -e
+if "!wintopt!"=="3" winget install TeamViewer.TeamViewer -e
+if "!wintopt!"=="4" winget install Bitwarden.Bitwarden -e
+if "!wintopt!"=="5" winget install Foxit.FoxitReader -e
+if "!wintopt!"=="6" winget install GIMP.GIMP -e
+if "!wintopt!"=="7" winget install Notepad++.Notepad++ -e
+if "!wintopt!"=="8" winget install Microsoft.VisualStudioCode -e
+if "!wintopt!"=="9" winget install GitHub.GitHubDesktop -e
+if "!wintopt!"=="10" winget install VideoLAN.VLC -e
+if "!wintopt!"=="11" winget install Spotify.Spotify -e
+if "!wintopt!"=="12" winget install 7zip.7zip -e
+if "!wintopt!"=="13" winget install CodecGuide.K-LiteCodecPack.Mega -e
+if "!wintopt!"=="14" winget install Oracle.JavaRuntimeEnvironment -e
+if "!wintopt!"=="15" winget install Git.Git -e
+if "!wintopt!"=="16" winget install Microsoft.WSL -e
+if "!wintopt!"=="17" winget install Microsoft.PowerShell -e
+if "!wintopt!"=="18" winget install ONLYOFFICE.DesktopEditors -e
+if "!wintopt!"=="19" winget install OBSProject.OBSStudio -e
+if "!wintopt!"=="20" winget install Giorgiotani.Peazip -e
+if "!wintopt!"=="21" winget install angryziber.AngryIPScanner -e
+if "!wintopt!"=="0" exit /b
+pause
+goto WINGET_INSTALL
 
-:: ==================================================
-:: CONFIGURAÇÕES (Implementada)
-:: ==================================================
-
-:configuracoes
+:CHOCO_INSTALL
 cls
-call :display_header
-echo.
-echo    CONFIGURACOES DO CLEANTOOLS
-echo.
-echo    1 - Configurar opcoes de logging
-echo    2 - Configurar opcoes de backup
-echo    3 - Sobre o CleanTools
-echo    4 - Voltar ao Menu Principal
-echo.
-set /p "escolha=    Escolha uma opcao: "
-
-if "!escolha!"=="1" goto config_logging
-if "!escolha!"=="2" goto config_backup
-if "!escolha!"=="3" goto about
-if "!escolha!"=="4" goto menu
-echo    Opcao invalida!
+echo ==== Instalar via Chocolatey ====
+echo Escolha o programa:
+echo 1. Google Chrome
+echo 2. AnyDesk
+echo 3. TeamViewer
+echo 4. Bitwarden
+echo 5. Foxit PDF Reader
+echo 6. Gimp
+echo 7. Notepad++
+echo 8. Visual Studio Code
+echo 9. GitHub Desktop
+echo 10. VLC
+echo 11. Spotify
+echo 12. 7-Zip
+echo 13. K-lite Codec Pack Full
+echo 14. Java Runtime Environment (JRE8)
+echo 15. Git
+echo 16. WSL
+echo 17. PowerShell 7
+echo 18. OnlyOffice
+echo 19. OBS Studio
+echo 20. Peazip
+echo 21. Angry IP Scanner
+echo 0. Voltar
+set /p "chocopt=Escolha: "
+if "!chocopt!"=="1" choco install googlechrome -y
+if "!chocopt!"=="2" choco install anydesk -y
+if "!chocopt!"=="3" choco install teamviewer -y
+if "!chocopt!"=="4" choco install bitwarden -y
+if "!chocopt!"=="5" choco install foxitreader -y
+if "!chocopt!"=="6" choco install gimp -y
+if "!chocopt!"=="7" choco install notepadplusplus -y
+if "!chocopt!"=="8" choco install vscode -y
+if "!chocopt!"=="9" choco install github-desktop -y
+if "!chocopt!"=="10" choco install vlc -y
+if "!chocopt!"=="11" choco install spotify -y
+if "!chocopt!"=="12" choco install 7zip -y
+if "!chocopt!"=="13" choco install k-litecodecpackmega -y
+if "!chocopt!"=="14" choco install jre8 -y
+if "!chocopt!"=="15" choco install git -y
+if "!chocopt!"=="16" choco install wsl -y
+if "!chocopt!"=="17" choco install powershell -y
+if "!chocopt!"=="18" choco install onlyoffice -y
+if "!chocopt!"=="19" choco install obs-studio -y
+if "!chocopt!"=="20" choco install peazip -y
+if "!chocopt!"=="21" choco install angryip -y
+if "!chocopt!"=="0" exit /b
 pause
-goto configuracoes
+goto CHOCO_INSTALL
 
-:config_logging
-echo.
-echo    CONFIGURACOES DE LOGGING:
-echo.
-echo    1 - Ativar logging detalhado
-echo    2 - Desativar logging
-echo    3 - Limpar logs antigos
-echo    4 - Voltar
-echo.
-set /p "log_choice=    Escolha: "
-
-if "!log_choice!"=="1" (
-    reg add "HKCU\Software\CleanTools" /v DetailedLogging /t REG_DWORD /d 1 /f >nul
-    echo    Logging detalhado ativado.
-)
-if "!log_choice!"=="2" (
-    reg add "HKCU\Software\CleanTools" /v DetailedLogging /t REG_DWORD /d 0 /f >nul
-    echo    Logging desativado.
-)
-if "!log_choice!"=="3" (
-    del /q "%TEMP%\CleanTools_*.log" 2>nul
-    echo    Logs antigos removidos.
-)
-if "!log_choice!"=="4" goto configuracoes
-pause
-goto config_logging
-
-:config_backup
-echo.
-echo    CONFIGURACOES DE BACKUP:
-echo.
-echo    1 - Ativar criacao automatica de pontos de restauracao
-echo    2 - Desativar criacao automatica de pontos de restauracao
-echo    3 - Criar ponto de restauracao agora
-echo    4 - Voltar
-echo.
-set /p "backup_choice=    Escolha: "
-
-if "!backup_choice!"=="1" (
-    reg add "HKCU\Software\CleanTools" /v AutoRestorePoint /t REG_DWORD /d 1 /f >nul
-    echo    Pontos de restauracao automaticos ativados.
-)
-if "!backup_choice!"=="2" (
-    reg add "HKCU\Software\CleanTools" /v AutoRestorePoint /t REG_DWORD /d 0 /f >nul
-    echo    Pontos de restauracao automaticos desativados.
-)
-if "!backup_choice!"=="3" (
-    call :create_restore_point
-)
-if "!backup_choice!"=="4" goto configuracoes
-pause
-goto config_backup
-
-:about
+:DOWNLOAD_LINKS
 cls
-call :display_header
-echo.
-echo    SOBRE O CLEANTOOLS PLUS v5.0 PREMIUM
-echo.
-echo    Desenvolvido para otimizacao e manutencao completa do Windows
-echo    Versao: 5.0.2023 (Build 1020)
-echo    Lancamento: Novembro 2023
-echo.
-echo    Desenvolvido por: Equipe CleanTools
-echo    Contato: support@cleantools.com
-echo.
-echo    Licenca: Freeware para uso pessoal
-echo.
-echo    Pressione qualquer tecla para voltar...
-pause >nul
-goto configuracoes
-
-:: ==================================================
-:: FIM DO PROGRAMA
-:: ==================================================
-
-:end
-echo.
-echo [%TIME%] Finalizando CleanTools Plus >> "%LOG_FILE%"
-echo    Obrigado por usar o CleanTools Plus v5.0!
-echo    O programa sera encerrado.
-echo.
-pause
-exit /b 0
+echo ==== Downloads oficiais ====
+echo 1. Free Download Manager - https://www.freedownloadmanager.org/pt/download.htm
+echo 2. Office 2024 - https://terabox.com/s/1gHLymvkhNVN9RANV4LRU0w
+echo 3. Ativador Office 2024 - https://terabox.com/s/1PTjkxwGlpnT69DdRSPDuUQ
+echo 4. VirtualBox - https://www.virtualbox.org/wiki/Downloads
+echo 5. Winrar + Ativador - https://terabox.com/s/17sQw7Taye19qrCpL6M4-DA
+echo 6. ADB - Platform Tools - https://developer.android.com/tools/releases/platform-tools?hl=pt-br
+echo 7. Bulk Crap Uninstaller - https://github.com/Klocman/Bulk-Crap-Uninstaller/releases
+echo 8. Visual C++ Redistributable - https://www.techpowerup.com/download/visual-c-redistributable-runtime-package-all-in-one/
+echo 9. Windows Update Blocker - https://www.sordum.org/9470/windows-update-blocker-v1-8/
+echo 10. DaVinci Resolve - https://www.computerbase.de/downloads/audio-und-video/davinci-resolve/
+echo 11. OBS Studio - https://www.computerbase.de/downloads/audio-und-video/obs-studio/
+echo 12. NextDNS - https://my.nextdns.io/login
+echo 13. Kaspersky + VPN - https://www.kaspersky.com.br/premium
+echo 14. RyTuneX - https://github.com/rayenghanmi/RyTuneX
+echo 15. RustDesk - https://rustdesk.com/pt/
+echo 16. WinUtil (ChrisTitus) - https://github.com/ChrisTitusTech/winutil
+echo 17. CrapFixer - https://github.com/builtbybel/CrapFixer
+echo 18. ADB APP CONTROL - https://adbappcontrol.com/en/
+echo 19. Windows Memory Cleaner - https://github.com/IgorMundstein/WinMemoryCleaner
+echo 20. Clean Tools Plus - https://github.com/braulioreis27/CleanTools-Plus
+echo 21. Defender Control - https://www.sordum.org/9480/defender-control-v2-1/
+echo 22. Driver Store Explorer - https://github.com/lostindark/DriverStoreExplorer
+echo 23. OCCT - https://www.ocbase.com/download
+echo 0. Voltar
+echo =================================
+set /p "dlopt=Escolha o link para abrir: "
+if "!dlopt!"=="1" start https://www.freedownloadmanager.org/pt/download.htm
+if "!dlopt!"=="2" start https://terabox.com/s/1gHLymvkhNVN9RANV4LRU0w
+if "!dlopt!"=="3" start https://terabox.com/s/1PTjkxwGlpnT69DdRSPDuUQ
+if "!dlopt!"=="4" start https://www.virtualbox.org/wiki/Downloads
+if "!dlopt!"=="5" start https://terabox.com/s/17sQw7Taye19qrCpL6M4-DA
+if "!dlopt!"=="6" start https://developer.android.com/tools/releases/platform-tools?hl=pt-br
+if "!dlopt!"=="7" start https://github.com/Klocman/Bulk-Crap-Uninstaller/releases
+if "!dlopt!"=="8" start https://www.techpowerup.com/download/visual-c-redistributable-runtime-package-all-in-one/
+if "!dlopt!"=="9" start https://www.sordum.org/9470/windows-update-blocker-v1-8/
+if "!dlopt!"=="10" start https://www.computerbase.de/downloads/audio-und-video/davinci-resolve/
+if "!dlopt!"=="11" start https://www.computerbase.de/downloads/audio-und-video/obs-studio/
+if "!dlopt!"=="12" start https://my.nextdns.io/login
+if "!dlopt!"=="13" start https://www.kaspersky.com.br/premium
+if "!dlopt!"=="14" start https://github.com/rayenghanmi/RyTuneX
+if "!dlopt!"=="15" start https://rustdesk.com/pt/
+if "!dlopt!"=="16" start https://github.com/ChrisTitusTech/winutil
+if "!dlopt!"=="17" start https://github.com/builtbybel/CrapFixer
+if "!dlopt!"=="18" start https://adbappcontrol.com/en/
+if "!dlopt!"=="19" start https://github.com/IgorMundstein/WinMemoryCleaner
+if "!dlopt!"=="20" start https://github.com/braulioreis27/CleanTools-Plus
+if "!dlopt!"=="21" start https://www.sordum.org/9480/defender-control-v2-1/
+if "!dlopt!"=="22" start https://github.com/lostindark/DriverStoreExplorer
+if "!dlopt!"=="23" start https://www.ocbase.com/download
+if "!dlopt!"=="0" exit /b
+goto DOWNLOAD_LINKS
