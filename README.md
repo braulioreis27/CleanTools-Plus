@@ -63,4 +63,31 @@ Opcional para execução sequencial de limpeza, reparo, otimizações, atualiza�
 
 ## **📥 Como Usar**  
 
-1. **Baixe o script**  
+1. **Baixe o script**
+'''cmd
+git clone https://github.com/seu-usuario/cleantools-plus.git
+
+2. **Execute o script** com permissão de administrador para acessar todas as funcionalidades avançadas.  
+3. Utilize o menu interativo para escolher as tarefas desejadas.  
+
+---
+
+## **📝 Sobre o Projeto**  
+
+Desenvolvido por Braulio Reis, com contributions e inspiração de ChrisTitusTech, Britec09, e outras comunidades.  
+
+Ferramentas integradas e utilizadas: Process Explorer, DriverStore Explorer, Chocolatey, Winget, Bulk Crap Uninstaller, Windows Memory Cleaner, Defender Control, e diversas outras utilidades de desempenho e manutenção.
+
+---
+
+## **📌 Contato e Suporte**  
+- GitHub: [braulioreis27](https://github.com/braulioreis27)  
+- Relate issues ou solicite funcionalidades via GitHub Issues.  
+
+---
+
+## **📄 Licença**  
+Este projeto está licenciado sob a [MIT License](LICENSE).
+
+---
+
