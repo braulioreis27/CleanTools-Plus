@@ -73,6 +73,21 @@ echo Executando limpeza simples...
 del /q /f "%temp%\*" >nul 2>&1
 del /q /f "C:\Windows\Temp\*" >nul 2>&1
 PowerShell.exe -NoProfile -Command Clear-RecycleBin -Confirm:$false >nul 2>&1
+del /s /f /q %temp%\*.*
+del /s /f /q C:\Windows\Temp\*.*
+del /s /f /q %userprofile%\recent\*.*
+ipconfig /flushdns
+cleanmgr /sagerun:1 >nul 2>&1
+::------------LIMPEZA DO CHHROME---------------
+echo Limpando cache do Chrome...
+del /s /f /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*" >nul 2>&1
+::------------LIMPEZA DO FIREFOX---------------
+echo Limpando cache do Firefox...
+for /d %%G in ("%APPDATA%\Mozilla\Firefox\Profiles\*.default-release") do (
+ del /s /f /q "%%G\cache2\*.*" >nul 2>&1
+ )
+ ::------------LIMPEZA DO EDGE---------------
+del /s /f /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*" >nul 2>&1
 if errorlevel 1 (
     echo Aviso: Alguns arquivos nao puderam ser removidos.
 ) else (
@@ -99,7 +114,119 @@ del /f /s /q %systemdrive%\*.bak >nul 2>&1
 del /f /q "%USERPROFILE%\cookies*.*" >nul 2>&1
 del /f /q "%USERPROFILE%\recent*.*" >nul 2>&1
 del /q /f "%USERPROFILE%\AppData\Local\Microsoft\Windows\Explorer\thumbcache_*.db" >nul 2>&1
+del /s /f /q %temp%\*.*
+ipconfig /flushdns
 cleanmgr /sagerun:1 >nul 2>&1
+::------------LIMPEZA DO CHHROME---------------
+echo Limpando cache do Chrome...
+del /s /f /q "%LOCALAPPDATA%\Google\Chrome\User Data\Default\Cache\*.*" >nul 2>&1
+::------------LIMPEZA DO FIREFOX---------------
+echo Limpando cache do Firefox...
+for /d %%G in ("%APPDATA%\Mozilla\Firefox\Profiles\*.default-release") do (
+ del /s /f /q "%%G\cache2\*.*" >nul 2>&1
+ )
+ ::------------LIMPEZA DO EDGE---------------
+del /s /f /q "%LOCALAPPDATA%\Microsoft\Edge\User Data\Default\Cache\*.*" >nul 2>&1
+
+
+::------------ LIMPEZA DO Free Download Manager ---------------
+echo Limpando cache do FreeDownloadManager...
+ del /s /q "%LOCALAPPDATA%\FreeDownloadManager.ORG\Free Download Manager\*.*"
+::------------ LIMPEZA DO Angry IP Scanner ---------------
+echo Limpando cache do Angry IP Scanner...
+del /s /q "%USERPROFILE%\.ipscan\*.*"
+del /s /q "%USERPROFILE%\.java\.userPrefs\ipscan\*.*"
+::------------ LIMPEZA DO Audacity ---------------
+echo Limpando cache do Audacity...
+del /s /q "%LOCALAPPDATA%\Audacity\SessionData\*.*"
+del /s /q "%APPDATA%\Audacity\*.*"
+::------------ LIMPEZA DO Disk SpeedUp ---------------
+echo Limpando cache do Disk SpeedUp...
+del /s /q "%APPDATA%\Disk SpeedUp\Temp\*.*"
+del /s /q "%LOCALAPPDATA%\Disk SpeedUp\Temp\*.*"
+::------------ LIMPEZA DO GIMP ---------------
+echo Limpando cache do GIMP...
+del /s /q "%APPDATA%\GIMP\2.10\tmp\*.*"
+::------------ LIMPEZA DO Kaspersky ---------------
+echo Limpando cache do Kaspersky...
+del /s /q "%ProgramData%\Kaspersky Lab\AVP21.3\Temp\*.*"
+::------------ LIMPEZA DO Notepad++---------------
+echo Limpando cache do Notepad++ ...
+del /s /q "%APPDATA%\Notepad++\backup\*.*"
+::------------ LIMPEZA DO OBS Studio ---------------
+echo Limpando cache do OBS Studio...
+del /s /q "%APPDATA%\obs-studio\cache\*.*"
+::------------ LIMPEZA DO Visual Studio Code ---------------
+echo Limpando cache do Visual Studio Code ...
+del /s /q "%APPDATA%\Code\Cache\*.*"
+del /s /q "%APPDATA%\Code\CachedData\*.*"
+del /s /q "%APPDATA%\Code\logs\*.*"
+::------------ LIMPEZA DO WSL (Windows Subsystem for Linux) ---------------
+echo Limpando cache do WSl...
+del /s /q "%USERPROFILE%\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_*\LocalCache\*.*"
+::------------ LIMPEZA DO VLC Media Player ---------------
+echo Limpando cache do VLC...
+del /s /q "%APPDATA%\vlc\cache\*.*"
+del /s /q "%APPDATA%\vlc\*thumbs.db"
+::------------ LIMPEZA DO Oracle VirtualBox ---------------
+echo Limpando cache do Virtualbox...
+del /s /q "%USERPROFILE%\.VirtualBox\*.tmp"
+::------------ LIMPEZA DO Logi Options+ ---------------
+echo Limpando cache do Logi Options+ ...
+del /s /q "%LOCALAPPDATA%\LogiOptionsPlus\Cache\*.*"
+::------------ LIMPEZA DO K-Lite Codec Pack ---------------
+echo Limpando cache do K-Lite Codec Pack...
+del /s /q "%ProgramFiles%\K-Lite Codec Pack\*temp*.*"
+::------------ LIMPEZA DO Java ---------------
+echo Limpando cache do Java...
+del /s /q "%USERPROFILE%\AppData\LocalLow\Sun\Java\Deployment\cache\*.*"
+::------------ LIMPEZA DO Git ---------------
+echo Limpando cache do Git...
+del /s /q "%USERPROFILE%\.git\*.*"
+del /s /q "%USERPROFILE%\.config\git\*.*"
+::------------ LIMPEZA DO Foxit PDF Reader ---------------
+echo Limpando cache do Foxit PDF Reader...
+del /s /q "%APPDATA%\Foxit Software\Foxit Reader\CrashRpt\*.*"
+del /s /q "%APPDATA%\Foxit Software\Foxit Reader\Temp\*.*"
+::------------ LIMPEZA DO DaVinci Resolve ---------------
+echo Limpando cache do DaVinci Resolve...
+del /s /q "%APPDATA%\Blackmagic Design\DaVinci Resolve\CacheClip\*.*"
+::------------ LIMPEZA DO BCUninstaller ---------------
+echo Limpando cache do BCUninstaller...
+del /s /q "%LOCALAPPDATA%\BCUninstaller\temp\*.*"
+::------------ LIMPEZA DO AnyDesk ---------------
+echo Limpando cache do AnyDesk...
+del /s /q "%APPDATA%\AnyDesk\*tmp*.*"
+::------------ LIMPEZA DO AMD Software: Adrenalin Edition ---------------
+echo Limpando cache do AMD Software...
+del /s /q "%LOCALAPPDATA%\AMD\CN\Cache\*.*"
+::------------ LIMPEZA DO ADB AppControl ---------------
+echo Limpando cache do ADB AppControl...
+del /s /q "%LOCALAPPDATA%\AdbAppControl\temp\*.*"
+::------------ LIMPEZA DO 7-Zip ---------------
+echo Limpando cache do 7-Zip...
+del /s /q "%APPDATA%\7-Zip\temp\*.*"
+::------------ LIMPEZA DO Spotify ---------------
+echo Limpando cache do Spotify...
+del /s /q "%LOCALAPPDATA%\Spotify\Storage\*.*"
+del /s /q "%LOCALAPPDATA%\Spotify\Data\*.*"
+::------------ LIMPEZA DO GitHub Desktop ---------------
+echo Limpando cache do GitHub Desktop...
+del /s /q "%APPDATA%\GitHub Desktop\Cache\*.*"
+del /s /q "%USERPROFILE%\AppData\Local\GitHubDesktop\Cache\*.*"
+::------------ LIMPEZA DO Bitwarden ---------------
+echo Limpando cache do Bitwarden...
+del /s /q "%APPDATA%\Bitwarden\Cache\*.*"
+::------------ LIMPEZA DO Excel, PowerPoint, Word ---------------
+echo Limpando cache do Excel PowerPoint  Word...
+del /s /q "%APPDATA%\Microsoft\Excel\XLStart\*.*"
+del /s /q "%APPDATA%\Microsoft\PowerPoint\*.*" 
+del /s /q "%APPDATA%\Microsoft\Word\Startup\*.*"
+::------------ LIMPEZA DO explorer.exe (Windows Explorer cache de ícones e miniaturas) ---------------
+echo Limpando cache do Explorer...
+del /s /q "%LOCALAPPDATA%\Microsoft\Windows\Explorer\thumbcache_*.db"
+del /s /q "%LOCALAPPDATA%\Microsoft\Windows\Explorer\iconcache_*.db"
+
 if errorlevel 1 (
     echo Aviso: Alguns arquivos ou processos nao puderam ser limpos.
 ) else (
